@@ -5,8 +5,8 @@ open data sources including company registries, public datasets, and
 official publications.
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any
 
 from .base import FrenchBaseBackend
 
@@ -26,16 +26,16 @@ class OpendatasoftBackend(FrenchBaseBackend):
     backend_name = "opendatasoft"
     display_name = "Opendatasoft"
     description_text = "Open data platform aggregating French public datasets"
-    
+
     config_keys = ["api_key", "dataset_id"]
     required_packages = ["requests"]
-    
+
     documentation_url = "https://help.opendatasoft.com/apis/ods-search-api"
     site_url = "https://data.opendatasoft.com"
     status_url = None
     api_url = "https://data.opendatasoft.com/api/explore/v2.1"
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize Opendatasoft backend.
 
         Args:
@@ -49,7 +49,7 @@ class OpendatasoftBackend(FrenchBaseBackend):
         self.base_url = self.config.get("base_url", self.api_url)
         self.dataset_id = self.config.get("dataset_id", "sirene@public")
 
-    def search_by_name(self, name: str, **kwargs) -> List[Dict[str, Any]]:
+    def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
         """Search for companies by name using Opendatasoft datasets.
 
         Args:
@@ -74,11 +74,11 @@ class OpendatasoftBackend(FrenchBaseBackend):
         if not name or not isinstance(name, str):
             return []
 
-        limit = min(kwargs.get("limit", 20), 100)
-        dataset_id = kwargs.get("dataset_id", self.dataset_id)
-        departement = kwargs.get("departement")
-        code_naf = kwargs.get("code_naf")
-        active_only = kwargs.get("active_only", False)
+        min(kwargs.get("limit", 20), 100)
+        kwargs.get("dataset_id", self.dataset_id)
+        kwargs.get("departement")
+        kwargs.get("code_naf")
+        kwargs.get("active_only", False)
 
         # TODO: Implement actual Opendatasoft API call
         # Example:
@@ -98,7 +98,9 @@ class OpendatasoftBackend(FrenchBaseBackend):
 
         return []
 
-    def search_by_code(self, code: str, code_type: Optional[str] = None, **kwargs) -> Optional[Dict[str, Any]]:
+    def search_by_code(
+        self, code: str, code_type: str | None = None, **kwargs
+    ) -> dict[str, Any] | None:
         """Search for a company by SIREN using Opendatasoft datasets.
 
         Args:
@@ -119,13 +121,15 @@ class OpendatasoftBackend(FrenchBaseBackend):
                 - activity: NAF code and activity description
         """
         if code_type and code_type != "siren":
-            raise ValueError(f"Opendatasoft default dataset only supports SIREN codes, not {code_type}")
+            raise ValueError(
+                f"Opendatasoft default dataset only supports SIREN codes, not {code_type}"
+            )
 
         siren = self.format_siren(code)
         if not self.validate_siren(siren):
             return None
 
-        dataset_id = kwargs.get("dataset_id", self.dataset_id)
+        kwargs.get("dataset_id", self.dataset_id)
 
         # TODO: Implement actual Opendatasoft API call
         # Example:
@@ -140,7 +144,9 @@ class OpendatasoftBackend(FrenchBaseBackend):
 
         return None
 
-    def get_documents(self, identifier: str, document_type: Optional[str] = None, **kwargs) -> List[Dict[str, Any]]:
+    def get_documents(
+        self, identifier: str, document_type: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
         """Get official documents/publications from Opendatasoft datasets.
 
         Opendatasoft provides access to various document datasets including:
@@ -209,10 +215,10 @@ class OpendatasoftBackend(FrenchBaseBackend):
         siren: str,
         dataset_id: str,
         document_type: str,
-        date_from: Optional[str] = None,
-        date_to: Optional[str] = None,
-        category: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        date_from: str | None = None,
+        date_to: str | None = None,
+        category: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get documents from a specific Opendatasoft dataset.
 
         Args:
@@ -244,7 +250,7 @@ class OpendatasoftBackend(FrenchBaseBackend):
 
         return []
 
-    def list_available_datasets(self, **kwargs) -> List[Dict[str, Any]]:
+    def list_available_datasets(self, **kwargs) -> list[dict[str, Any]]:
         """List available datasets on Opendatasoft platform.
 
         Args:
@@ -272,7 +278,9 @@ class OpendatasoftBackend(FrenchBaseBackend):
 
         return []
 
-    def _call_api(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def _call_api(
+        self, endpoint: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
         """Make API call to Opendatasoft service.
 
         Args:
@@ -290,7 +298,7 @@ class OpendatasoftBackend(FrenchBaseBackend):
         # - Response parsing
         return None
 
-    def _parse_search_results(self, response: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_search_results(self, response: dict[str, Any]) -> list[dict[str, Any]]:
         """Parse Opendatasoft search API response.
 
         Args:
@@ -302,7 +310,7 @@ class OpendatasoftBackend(FrenchBaseBackend):
         # TODO: Implement response parsing
         return []
 
-    def _parse_company_data(self, response: Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_company_data(self, response: dict[str, Any]) -> dict[str, Any]:
         """Parse Opendatasoft company data response.
 
         Args:
@@ -314,7 +322,9 @@ class OpendatasoftBackend(FrenchBaseBackend):
         # TODO: Implement response parsing
         return {}
 
-    def _parse_documents(self, response: Dict[str, Any], document_type: str) -> List[Dict[str, Any]]:
+    def _parse_documents(
+        self, response: dict[str, Any], document_type: str
+    ) -> list[dict[str, Any]]:
         """Parse Opendatasoft documents API response.
 
         Args:
@@ -326,4 +336,3 @@ class OpendatasoftBackend(FrenchBaseBackend):
         """
         # TODO: Implement response parsing
         return []
-

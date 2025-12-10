@@ -16,7 +16,15 @@ backends/
 │       ├── entdatagouv.py     # Backend data.gouv.fr (BODACC, BALO)
 │       ├── pappers.py         # Backend Pappers (agrégateur de données)
 │       ├── infogreffe.py      # Backend Infogreffe (registre du commerce)
-│       └── opendatasoft.py    # Backend Opendatasoft (plateforme open data)
+│       ├── opendatasoft.py    # Backend Opendatasoft (plateforme open data)
+│       ├── inpi.py            # Backend INPI (Institut National de la Propriété Industrielle)
+│       ├── societecom.py      # Backend Societe.com (agrégateur)
+│       ├── verif.py           # Backend Verif.com (vérification d'entreprises)
+│       ├── societeinfo.py     # Backend SocieteInfo (enrichissement B2B)
+│       ├── cci.py             # Backend CCI (Chambres de Commerce)
+│       ├── societedata.py     # Backend SocieteData (données légales/financières)
+│       ├── pharow.py          # Backend Pharow (agrégation B2B)
+│       └── espacedocs.py      # Backend EspaceDocs (documents officiels)
 ```
 
 ## Utilisation
@@ -128,6 +136,51 @@ balo_docs = backend.get_documents(
   - Accès aux publications BODACC et BALO
   - Accès à de multiples datasets publics
   - Possibilité de lister les datasets disponibles
+
+- **INPIBackend** : Institut National de la Propriété Industrielle
+  - Registre national des entreprises (commerciales, artisanales, agricoles, indépendantes)
+  - Recherche par nom
+  - Recherche par SIREN
+  - Données officielles complètes
+
+- **SocieteComBackend** : Agrégateur d'informations sur les entreprises
+  - Informations légales, juridiques et financières
+  - Agrège données INPI, INSEE, RCS
+  - Recherche par nom et SIREN
+  - Données financières et documents
+
+- **VerifBackend** : Vérification d'entreprises
+  - Vérification de données d'entreprises
+  - Recherche par nom et SIREN
+  - Services de validation
+
+- **SocieteInfoBackend** : Enrichissement de données B2B
+  - Services d'enrichissement de données
+  - Bases de données BtoB
+  - Données mises à jour quotidiennement
+  - API entreprise
+
+- **CCIBackend** : Chambres de Commerce et d'Industrie
+  - Annuaire des Entreprises de France
+  - Entreprises répertoriées par les CCI
+  - Recherche par nom et SIREN
+
+- **SocieteDataBackend** : Données légales, financières et stratégiques
+  - Plus de 12 millions d'entreprises françaises
+  - Données légales, financières et stratégiques
+  - Informations sur dirigeants et bilans
+  - Documents juridiques
+
+- **PharowBackend** : Agrégation de sources de données B2B
+  - Centralisation de diverses sources B2B
+  - Enrichissement de données d'entreprises
+  - Segmentations personnalisées
+
+- **EspaceDocsBackend** : Documents officiels
+  - Accès instantané aux informations officielles
+  - Documents légaux, bilans financiers
+  - K-bis, états financiers
+  - Plus de 12 millions d'entreprises
 
 ## Interface commune
 

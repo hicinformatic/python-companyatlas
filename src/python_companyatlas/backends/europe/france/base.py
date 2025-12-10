@@ -4,8 +4,8 @@ This module provides French-specific base functions and common utilities
 for all French backends (INSEE, data.gouv.fr, etc.).
 """
 
-from typing import Dict, Any, List, Optional
 import re
+from typing import Any
 
 from ...base import BaseBackend
 
@@ -19,9 +19,10 @@ class FrenchBaseBackend(BaseBackend):
     - Common search patterns
     """
 
+    continent = "europe"
     country_code = "FR"
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize French backend.
 
         Args:
@@ -44,10 +45,10 @@ class FrenchBaseBackend(BaseBackend):
             return False
 
         # Remove spaces and hyphens
-        siren_clean = re.sub(r'[\s-]', '', str(siren))
+        siren_clean = re.sub(r"[\s-]", "", str(siren))
 
         # Must be exactly 9 digits
-        if not re.match(r'^\d{9}$', siren_clean):
+        if not re.match(r"^\d{9}$", siren_clean):
             return False
 
         # Luhn algorithm validation
@@ -64,7 +65,7 @@ class FrenchBaseBackend(BaseBackend):
         """
         if not siren:
             return ""
-        siren_clean = re.sub(r'[\s-]', '', str(siren))
+        siren_clean = re.sub(r"[\s-]", "", str(siren))
         return siren_clean[:9] if len(siren_clean) >= 9 else siren_clean
 
     def validate_rna(self, rna: str) -> bool:
@@ -82,10 +83,10 @@ class FrenchBaseBackend(BaseBackend):
             return False
 
         # Remove spaces and hyphens
-        rna_clean = re.sub(r'[\s-]', '', str(rna).upper())
+        rna_clean = re.sub(r"[\s-]", "", str(rna).upper())
 
         # Must be W followed by 8 digits
-        return bool(re.match(r'^W\d{8}$', rna_clean))
+        return bool(re.match(r"^W\d{8}$", rna_clean))
 
     def format_rna(self, rna: str) -> str:
         """Format an RNA number (W + 8 digits).
@@ -98,16 +99,16 @@ class FrenchBaseBackend(BaseBackend):
         """
         if not rna:
             return ""
-        rna_clean = re.sub(r'[\s-]', '', str(rna).upper())
-        if rna_clean.startswith('W'):
+        rna_clean = re.sub(r"[\s-]", "", str(rna).upper())
+        if rna_clean.startswith("W"):
             return rna_clean[:9] if len(rna_clean) >= 9 else rna_clean
         # If missing W prefix, add it
-        digits = re.sub(r'[^\d]', '', rna_clean)
+        digits = re.sub(r"[^\d]", "", rna_clean)
         if len(digits) == 8:
             return f"W{digits}"
         return rna_clean
 
-    def detect_identifier_type(self, identifier: str) -> Optional[str]:
+    def detect_identifier_type(self, identifier: str) -> str | None:
         """Detect the type of French identifier (SIREN or RNA).
 
         Args:
@@ -116,7 +117,7 @@ class FrenchBaseBackend(BaseBackend):
         Returns:
             "siren", "rna", or None if unknown
         """
-        identifier_clean = re.sub(r'[\s-]', '', str(identifier).upper())
+        identifier_clean = re.sub(r"[\s-]", "", str(identifier).upper())
 
         if self.validate_siren(identifier_clean):
             return "siren"
@@ -148,7 +149,7 @@ class FrenchBaseBackend(BaseBackend):
 
         return total % 10 == 0
 
-    def search_by_name(self, name: str, **kwargs) -> List[Dict[str, Any]]:
+    def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
         """Search for companies/entities by name.
 
         This is a generic search that works with company names like "tour eiffel".
@@ -162,7 +163,9 @@ class FrenchBaseBackend(BaseBackend):
         """
         raise NotImplementedError("Subclasses must implement search_by_name")
 
-    def search_by_code(self, code: str, code_type: Optional[str] = None, **kwargs) -> Optional[Dict[str, Any]]:
+    def search_by_code(
+        self, code: str, code_type: str | None = None, **kwargs
+    ) -> dict[str, Any] | None:
         """Search for a company/entity by its registration code (SIREN or RNA).
 
         Args:
@@ -175,7 +178,9 @@ class FrenchBaseBackend(BaseBackend):
         """
         raise NotImplementedError("Subclasses must implement search_by_code")
 
-    def get_documents(self, identifier: str, document_type: Optional[str] = None, **kwargs) -> List[Dict[str, Any]]:
+    def get_documents(
+        self, identifier: str, document_type: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
         """Get official documents/publications for a company/entity.
 
         Retrieves publications like BODACC, BALO, etc.
@@ -189,4 +194,3 @@ class FrenchBaseBackend(BaseBackend):
             List of document dictionaries
         """
         raise NotImplementedError("Subclasses must implement get_documents")
-

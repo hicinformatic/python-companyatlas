@@ -10,7 +10,10 @@ authors = [{ name = "Charl", email = "charl@example.com" }]
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
-dependencies = []
+dependencies = [
+    # flagpy is optional but recommended for flag image support
+    # Falls back to emoji if not installed
+]
 
 [project.optional-dependencies]
 dev = [
@@ -20,6 +23,12 @@ dev = [
     "flake8-simplify>=0.21",
     "flake8-docstrings>=1.7",
     "mypy>=1.0",
+]
+flags = [
+    "flagpy>=1.0.0",  # For country flag image support (optional)
+]
+countries = [
+    "pycountry>=23.0.0",  # For country code to name conversion (optional, replaces manual mapping)
 ]
 
 [project.urls]

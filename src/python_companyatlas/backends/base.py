@@ -1,8 +1,136 @@
 """Base backend class with generic functions for all country backends."""
 
-from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional
 import importlib
+from abc import ABC, abstractmethod
+from typing import Any
+
+# Mapping ISO country codes to country names for flagpy
+_COUNTRY_CODE_TO_NAME = {
+    "FR": "France",
+    "US": "United States",
+    "GB": "United Kingdom",
+    "DE": "Germany",
+    "IT": "Italy",
+    "ES": "Spain",
+    "NL": "Netherlands",
+    "BE": "Belgium",
+    "CH": "Switzerland",
+    "AT": "Austria",
+    "SE": "Sweden",
+    "NO": "Norway",
+    "DK": "Denmark",
+    "FI": "Finland",
+    "PL": "Poland",
+    "PT": "Portugal",
+    "IE": "Ireland",
+    "GR": "Greece",
+    "CZ": "Czech Republic",
+    "HU": "Hungary",
+    "RO": "Romania",
+    "BG": "Bulgaria",
+    "HR": "Croatia",
+    "SK": "Slovakia",
+    "SI": "Slovenia",
+    "LT": "Lithuania",
+    "LV": "Latvia",
+    "EE": "Estonia",
+    "LU": "Luxembourg",
+    "MT": "Malta",
+    "CY": "Cyprus",
+}
+
+
+def get_country_flag_emoji(country_code: str) -> str:
+    """Convert a country ISO code (2 letters) to flag emoji Unicode.
+
+    Uses Regional Indicator Symbols (U+1F1E6 to U+1F1FF) to create
+    flag emojis from ISO 3166-1 alpha-2 country codes.
+
+    Args:
+        country_code: ISO 3166-1 alpha-2 country code (e.g., "FR", "US", "GB")
+
+    Returns:
+        Flag emoji Unicode string (e.g., "🇫🇷", "🇺🇸", "🇬🇧")
+        Returns empty string if code is invalid
+
+    Examples:
+        >>> get_country_flag_emoji("FR")
+        '🇫🇷'
+        >>> get_country_flag_emoji("US")
+        '🇺🇸'
+        >>> get_country_flag_emoji("GB")
+        '🇬🇧'
+    """
+    if not country_code or len(country_code) != 2:
+        return ""
+
+    country_code = country_code.upper()
+
+    # Validate that both characters are letters
+    if not country_code.isalpha():
+        return ""
+
+    # Use Regional Indicator Symbols (U+1F1E6 to U+1F1FF)
+    # Each letter A-Z maps to U+1F1E6 + (ord(letter) - ord('A'))
+    try:
+        flag_emoji = "".join(chr(ord("🇦") + ord(letter) - ord("A")) for letter in country_code)
+        return flag_emoji
+    except (ValueError, TypeError):
+        return ""
+
+
+def get_country_flag_image_base64(country_code: str, size: tuple | None = None) -> str:
+    """Get country flag as base64-encoded image using flagpy.
+
+    Args:
+        country_code: ISO 3166-1 alpha-2 country code (e.g., "FR", "US", "GB")
+        size: Optional tuple (width, height) to resize the image. Default is (32, 16).
+
+    Returns:
+        Base64-encoded image data URL string (e.g., "data:image/png;base64,...")
+        Returns empty string if code is invalid or flagpy is not available
+    """
+    if not country_code or len(country_code) != 2:
+        return ""
+
+    country_code = country_code.upper()
+
+    # Get country name from mapping
+    country_name = _COUNTRY_CODE_TO_NAME.get(country_code)
+    if not country_name:
+        return ""
+
+    try:
+        import base64
+        from io import BytesIO
+
+        import flagpy as fp
+
+        # Get flag image
+        img = fp.get_flag_img(country_name)
+
+        # Resize if requested
+        if size:
+            img = img.resize(
+                size, resample=img.__class__.LANCZOS if hasattr(img.__class__, "LANCZOS") else 1
+            )
+        else:
+            # Default small size for admin display
+            img = img.resize(
+                (32, 16), resample=img.__class__.LANCZOS if hasattr(img.__class__, "LANCZOS") else 1
+            )
+
+        # Convert to base64
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+        img_str = base64.b64encode(buffer.getvalue()).decode()
+        return f"data:image/png;base64,{img_str}"
+    except ImportError:
+        # flagpy not installed, fallback to emoji
+        return ""
+    except Exception:
+        # Any other error, return empty
+        return ""
 
 
 class BaseBackend(ABC):
@@ -15,29 +143,30 @@ class BaseBackend(ABC):
 
     # Backend metadata
     name: str = "base"
-    display_name: Optional[str] = None
-    description_text: Optional[str] = None
-    
-    # Configuration
-    config_keys: List[str] = []
-    required_packages: List[str] = []
-    
-    # URLs
-    status_url: Optional[str] = None
-    documentation_url: Optional[str] = None
-    site_url: Optional[str] = None
-    api_url: Optional[str] = None
+    display_name: str | None = None
+    description_text: str | None = None
+    continent: str | None = None
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    # Configuration
+    config_keys: list[str] = []
+    required_packages: list[str] = []
+
+    # URLs
+    status_url: str | None = None
+    documentation_url: str | None = None
+    site_url: str | None = None
+    api_url: str | None = None
+
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize backend with configuration.
 
         Args:
             config: Configuration dictionary with API keys, endpoints, etc.
         """
-        self._raw_config: Dict[str, Any] = dict(config or {})
-        self._config: Dict[str, Any] = self._filter_config(self._raw_config)
+        self._raw_config: dict[str, Any] = dict(config or {})
+        self._config: dict[str, Any] = self._filter_config(self._raw_config)
 
-    def _filter_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+    def _filter_config(self, config: dict[str, Any]) -> dict[str, Any]:
         """Extract the subset of config keys declared by the backend.
 
         Args:
@@ -51,7 +180,7 @@ class BaseBackend(ABC):
         return {key: config[key] for key in self.config_keys if key in config}
 
     @property
-    def config(self) -> Dict[str, Any]:
+    def config(self) -> dict[str, Any]:
         """Access configuration values.
 
         Returns:
@@ -72,9 +201,7 @@ class BaseBackend(ABC):
             return self.name.replace("_", " ").title()
         return self.__class__.__name__
 
-    def configure(
-        self, config: Dict[str, Any], *, replace: bool = False
-    ) -> "BaseBackend":
+    def configure(self, config: dict[str, Any], *, replace: bool = False) -> "BaseBackend":
         """Update backend configuration (filtered by config_keys).
 
         Args:
@@ -111,19 +238,15 @@ class BaseBackend(ABC):
             except ImportError:
                 return False
 
-    def check_required_packages(self) -> Dict[str, bool]:
+    def check_required_packages(self) -> dict[str, bool]:
         """Check all required packages and return their installation status.
 
         Returns:
             Dict mapping package names to their installation status
         """
-        return {
-            package: self.check_package(package) for package in self.required_packages
-        }
+        return {package: self.check_package(package) for package in self.required_packages}
 
-    def check_config_keys(
-        self, config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, bool]:
+    def check_config_keys(self, config: dict[str, Any] | None = None) -> dict[str, bool]:
         """Check if all config_keys are present in the provided configuration.
 
         Args:
@@ -136,9 +259,7 @@ class BaseBackend(ABC):
             config = self._raw_config
         return {key: key in config for key in self.config_keys}
 
-    def check_package_and_config(
-        self, config: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
+    def check_package_and_config(self, config: dict[str, Any] | None = None) -> dict[str, Any]:
         """Check both required packages and configuration keys.
 
         Args:
@@ -152,7 +273,7 @@ class BaseBackend(ABC):
             "config": self.check_config_keys(config),
         }
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get backend status and availability information.
 
         Returns:
@@ -167,12 +288,8 @@ class BaseBackend(ABC):
         packages = check.get("packages", {})
         config_status = check.get("config", {})
 
-        missing_packages = [
-            pkg for pkg, installed in packages.items() if not installed
-        ]
-        missing_config = [
-            key for key in self.config_keys if not config_status.get(key)
-        ]
+        missing_packages = [pkg for pkg, installed in packages.items() if not installed]
+        missing_config = [key for key in self.config_keys if not config_status.get(key)]
 
         if missing_packages:
             status = "missing_packages"
@@ -181,11 +298,16 @@ class BaseBackend(ABC):
         else:
             status = "available"
 
+        country_code = self.get_country_code()
+
         return {
             "status": status,
             "is_available": status == "available",
             "backend_name": self.name,
             "backend_display_name": self.label,
+            "country_code": country_code,
+            "country_flag": self.get_country_flag(),
+            "country_flag_image": self.get_country_flag_image_base64(),
             "packages": packages,
             "config": config_status,
             "missing_packages": missing_packages,
@@ -207,12 +329,8 @@ class BaseBackend(ABC):
         packages = check.get("packages", {})
         config_status = check.get("config", {})
 
-        missing_packages = [
-            pkg for pkg, installed in packages.items() if not installed
-        ]
-        missing_config = [
-            key for key in self.config_keys if not config_status.get(key)
-        ]
+        missing_packages = [pkg for pkg, installed in packages.items() if not installed]
+        missing_config = [key for key in self.config_keys if not config_status.get(key)]
 
         if missing_packages:
             return (
@@ -229,7 +347,7 @@ class BaseBackend(ABC):
         return True, ""
 
     @abstractmethod
-    def search_by_name(self, name: str, **kwargs) -> List[Dict[str, Any]]:
+    def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
         """Search for companies/entities by name.
 
         This is a generic search that works with company names like "tour eiffel".
@@ -248,7 +366,9 @@ class BaseBackend(ABC):
         pass
 
     @abstractmethod
-    def search_by_code(self, code: str, code_type: Optional[str] = None, **kwargs) -> Optional[Dict[str, Any]]:
+    def search_by_code(
+        self, code: str, code_type: str | None = None, **kwargs
+    ) -> dict[str, Any] | None:
         """Search for a company/entity by its registration code.
 
         This is a specific search using official registration codes like SIREN, RNA, etc.
@@ -270,7 +390,9 @@ class BaseBackend(ABC):
         pass
 
     @abstractmethod
-    def get_documents(self, identifier: str, document_type: Optional[str] = None, **kwargs) -> List[Dict[str, Any]]:
+    def get_documents(
+        self, identifier: str, document_type: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
         """Get official documents/publications for a company/entity.
 
         This retrieves official publications like BODACC, BALO, etc.
@@ -296,7 +418,39 @@ class BaseBackend(ABC):
         Returns:
             ISO 3166-1 alpha-2 country code (e.g., "FR", "GB", "US")
         """
-        return getattr(self, 'country_code', 'XX')
+        return getattr(self, "country_code", "XX")
+
+    def get_country_flag(self) -> str:
+        """Get the country flag emoji for this backend.
+
+        Returns:
+            Country flag emoji Unicode string (e.g., "🇫🇷" for France)
+            Returns empty string if country code is invalid
+        """
+        country_code = self.get_country_code()
+        return get_country_flag_emoji(country_code)
+
+    def get_country_flag_image_base64(self, size: tuple | None = None) -> str:
+        """Get the country flag as base64-encoded image for this backend.
+
+        Args:
+            size: Optional tuple (width, height) to resize the image. Default is (32, 16).
+
+        Returns:
+            Base64-encoded image data URL string (e.g., "data:image/png;base64,...")
+            Returns empty string if country code is invalid or flagpy is not available
+        """
+        country_code = self.get_country_code()
+        return get_country_flag_image_base64(country_code, size=size)
+
+    def get_continent(self) -> str | None:
+        """Get the continent for this backend.
+
+        Returns:
+            Continent name (e.g., "europe", "americas", "asia", "africa", "oceania")
+            or None if not specified
+        """
+        return getattr(self, "continent", None)
 
     def get_backend_name(self) -> str:
         """Get the name of this backend.
@@ -304,5 +458,4 @@ class BaseBackend(ABC):
         Returns:
             Backend name identifier
         """
-        return getattr(self, 'backend_name', self.name)
-
+        return getattr(self, "backend_name", self.name)

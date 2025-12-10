@@ -5,8 +5,8 @@ information about companies including financial data, legal information,
 and official documents.
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any
 
 from .base import FrenchBaseBackend
 
@@ -26,16 +26,16 @@ class PappersBackend(FrenchBaseBackend):
     backend_name = "pappers"
     display_name = "Pappers"
     description_text = "French company data aggregator with comprehensive business information"
-    
+
     config_keys = ["api_key"]
     required_packages = ["requests"]
-    
+
     documentation_url = "https://www.pappers.fr/api/documentation"
     site_url = "https://www.pappers.fr"
     status_url = "https://www.pappers.fr/api/status"
     api_url = "https://api.pappers.fr/v2"
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize Pappers backend.
 
         Args:
@@ -45,12 +45,9 @@ class PappersBackend(FrenchBaseBackend):
         """
         super().__init__(config)
         self.api_key = self.config.get("api_key")
-        self.base_url = self.config.get(
-            "base_url",
-            self.api_url
-        )
+        self.base_url = self.config.get("base_url", self.api_url)
 
-    def search_by_name(self, name: str, **kwargs) -> List[Dict[str, Any]]:
+    def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
         """Search for companies by name using Pappers.
 
         Args:
@@ -76,11 +73,11 @@ class PappersBackend(FrenchBaseBackend):
         if not name or not isinstance(name, str):
             return []
 
-        limit = min(kwargs.get("limit", 20), 100)
-        page = kwargs.get("page", 1)
-        departement = kwargs.get("departement")
-        code_naf = kwargs.get("code_naf")
-        forme_juridique = kwargs.get("forme_juridique")
+        min(kwargs.get("limit", 20), 100)
+        kwargs.get("page", 1)
+        kwargs.get("departement")
+        kwargs.get("code_naf")
+        kwargs.get("forme_juridique")
 
         # TODO: Implement actual Pappers API call
         # Example:
@@ -101,7 +98,9 @@ class PappersBackend(FrenchBaseBackend):
 
         return []
 
-    def search_by_code(self, code: str, code_type: Optional[str] = None, **kwargs) -> Optional[Dict[str, Any]]:
+    def search_by_code(
+        self, code: str, code_type: str | None = None, **kwargs
+    ) -> dict[str, Any] | None:
         """Search for a company by SIREN using Pappers.
 
         Args:
@@ -139,7 +138,9 @@ class PappersBackend(FrenchBaseBackend):
 
         return None
 
-    def get_documents(self, identifier: str, document_type: Optional[str] = None, **kwargs) -> List[Dict[str, Any]]:
+    def get_documents(
+        self, identifier: str, document_type: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
         """Get official documents for a company from Pappers.
 
         Pappers provides access to various documents including:
@@ -171,7 +172,7 @@ class PappersBackend(FrenchBaseBackend):
 
         date_from = kwargs.get("date_from")
         date_to = kwargs.get("date_to")
-        category = kwargs.get("category")
+        kwargs.get("category")
 
         # Convert datetime to ISO string if needed
         if isinstance(date_from, datetime):
@@ -194,7 +195,7 @@ class PappersBackend(FrenchBaseBackend):
 
         return []
 
-    def get_financial_data(self, siren: str, **kwargs) -> Optional[Dict[str, Any]]:
+    def get_financial_data(self, siren: str, **kwargs) -> dict[str, Any] | None:
         """Get financial data for a company.
 
         Args:
@@ -220,7 +221,9 @@ class PappersBackend(FrenchBaseBackend):
 
         return None
 
-    def _call_api(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def _call_api(
+        self, endpoint: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
         """Make API call to Pappers service.
 
         Args:
@@ -238,7 +241,7 @@ class PappersBackend(FrenchBaseBackend):
         # - Response parsing
         return None
 
-    def _parse_search_results(self, response: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_search_results(self, response: dict[str, Any]) -> list[dict[str, Any]]:
         """Parse Pappers search API response.
 
         Args:
@@ -250,7 +253,7 @@ class PappersBackend(FrenchBaseBackend):
         # TODO: Implement response parsing
         return []
 
-    def _parse_company_data(self, response: Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_company_data(self, response: dict[str, Any]) -> dict[str, Any]:
         """Parse Pappers company data API response.
 
         Args:

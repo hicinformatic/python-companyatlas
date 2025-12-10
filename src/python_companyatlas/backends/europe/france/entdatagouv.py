@@ -4,8 +4,8 @@ This backend provides access to French entity data from data.gouv.fr,
 including associations (RNA), companies, and official publications.
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any
 
 from .base import FrenchBaseBackend
 
@@ -21,16 +21,16 @@ class EntDataGouvBackend(FrenchBaseBackend):
     backend_name = "entdatagouv"
     display_name = "data.gouv.fr"
     description_text = "French open data platform for public entities and datasets"
-    
+
     config_keys = ["dataset_id"]
     required_packages = ["requests"]
-    
+
     documentation_url = "https://www.data.gouv.fr/api"
     site_url = "https://www.data.gouv.fr"
     status_url = None
     api_url = "https://www.data.gouv.fr/api/1"
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize data.gouv.fr backend.
 
         Args:
@@ -42,7 +42,7 @@ class EntDataGouvBackend(FrenchBaseBackend):
         self.base_url = self.config.get("base_url", self.api_url)
         self.dataset_id = self.config.get("dataset_id")
 
-    def search_by_name(self, name: str, **kwargs) -> List[Dict[str, Any]]:
+    def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
         """Search for entities by name on data.gouv.fr.
 
         Args:
@@ -62,16 +62,18 @@ class EntDataGouvBackend(FrenchBaseBackend):
         if not name or not isinstance(name, str):
             return []
 
-        limit = kwargs.get("limit", 20)
-        entity_type = kwargs.get("entity_type")
+        kwargs.get("limit", 20)
+        kwargs.get("entity_type")
 
         # TODO: Implement actual data.gouv.fr API call
         # This would search across relevant datasets
-        results = []
+        results: list[dict[str, Any]] = []
 
         return results
 
-    def search_by_code(self, code: str, code_type: Optional[str] = None, **kwargs) -> Optional[Dict[str, Any]]:
+    def search_by_code(
+        self, code: str, code_type: str | None = None, **kwargs
+    ) -> dict[str, Any] | None:
         """Search for an entity by SIREN or RNA on data.gouv.fr.
 
         Args:
@@ -113,7 +115,9 @@ class EntDataGouvBackend(FrenchBaseBackend):
 
         return None
 
-    def get_documents(self, identifier: str, document_type: Optional[str] = None, **kwargs) -> List[Dict[str, Any]]:
+    def get_documents(
+        self, identifier: str, document_type: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
         """Get official documents/publications for an entity.
 
         Retrieves publications like BODACC, BALO, etc. from data.gouv.fr.
@@ -175,10 +179,10 @@ class EntDataGouvBackend(FrenchBaseBackend):
         self,
         identifier: str,
         code_type: str,
-        date_from: Optional[str] = None,
-        date_to: Optional[str] = None,
-        category: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        date_from: str | None = None,
+        date_to: str | None = None,
+        category: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get BODACC documents for an entity.
 
         Args:
@@ -201,10 +205,10 @@ class EntDataGouvBackend(FrenchBaseBackend):
         self,
         identifier: str,
         code_type: str,
-        date_from: Optional[str] = None,
-        date_to: Optional[str] = None,
-        category: Optional[str] = None
-    ) -> List[Dict[str, Any]]:
+        date_from: str | None = None,
+        date_to: str | None = None,
+        category: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Get BALO documents for an entity.
 
         Args:
@@ -223,7 +227,9 @@ class EntDataGouvBackend(FrenchBaseBackend):
         # Should query the dataset filtering by SIREN/RNA and date range
         return []
 
-    def _call_api(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def _call_api(
+        self, endpoint: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
         """Make API call to data.gouv.fr.
 
         Args:
@@ -239,4 +245,3 @@ class EntDataGouvBackend(FrenchBaseBackend):
         # - Error handling
         # - Response parsing
         return None
-

@@ -5,8 +5,8 @@ et des Sociétés) that provides access to official company registration data,
 legal documents, and corporate information.
 """
 
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any
 
 from .base import FrenchBaseBackend
 
@@ -25,16 +25,16 @@ class InfogreffeBackend(FrenchBaseBackend):
     backend_name = "infogreffe"
     display_name = "Infogreffe"
     description_text = "French commercial court registry (Registre du Commerce et des Sociétés)"
-    
+
     config_keys = ["api_key", "username", "password"]
     required_packages = ["requests"]
-    
+
     documentation_url = "https://www.infogreffe.fr"
     site_url = "https://www.infogreffe.fr"
     status_url = None
     api_url = "https://api.infogreffe.fr"
 
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config: dict[str, Any] | None = None):
         """Initialize Infogreffe backend.
 
         Args:
@@ -50,7 +50,7 @@ class InfogreffeBackend(FrenchBaseBackend):
         self.password = self.config.get("password")
         self.base_url = self.config.get("base_url", self.api_url)
 
-    def search_by_name(self, name: str, **kwargs) -> List[Dict[str, Any]]:
+    def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
         """Search for companies by name in Infogreffe registry.
 
         Args:
@@ -75,10 +75,10 @@ class InfogreffeBackend(FrenchBaseBackend):
         if not name or not isinstance(name, str):
             return []
 
-        limit = kwargs.get("limit", 20)
-        greffe = kwargs.get("greffe")
-        forme_juridique = kwargs.get("forme_juridique")
-        code_naf = kwargs.get("code_naf")
+        kwargs.get("limit", 20)
+        kwargs.get("greffe")
+        kwargs.get("forme_juridique")
+        kwargs.get("code_naf")
 
         # TODO: Implement actual Infogreffe API call
         # Note: Infogreffe may require web scraping or specific API access
@@ -99,7 +99,9 @@ class InfogreffeBackend(FrenchBaseBackend):
 
         return []
 
-    def search_by_code(self, code: str, code_type: Optional[str] = None, **kwargs) -> Optional[Dict[str, Any]]:
+    def search_by_code(
+        self, code: str, code_type: str | None = None, **kwargs
+    ) -> dict[str, Any] | None:
         """Search for a company by SIREN or RCS in Infogreffe registry.
 
         Args:
@@ -141,13 +143,15 @@ class InfogreffeBackend(FrenchBaseBackend):
 
         elif code_type == "rcs":
             # RCS format: "B 123 456 789" or "B123456789"
-            rcs = self._format_rcs(code)
+            self._format_rcs(code)
             # TODO: Search by RCS
             return None
 
         return None
 
-    def get_documents(self, identifier: str, document_type: Optional[str] = None, **kwargs) -> List[Dict[str, Any]]:
+    def get_documents(
+        self, identifier: str, document_type: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
         """Get official documents from Infogreffe.
 
         Infogreffe provides access to:
@@ -178,7 +182,7 @@ class InfogreffeBackend(FrenchBaseBackend):
 
         date_from = kwargs.get("date_from")
         date_to = kwargs.get("date_to")
-        category = kwargs.get("category")
+        kwargs.get("category")
 
         # Convert datetime to ISO string if needed
         if isinstance(date_from, datetime):
@@ -197,7 +201,7 @@ class InfogreffeBackend(FrenchBaseBackend):
 
         return []
 
-    def get_extrait_kbis(self, siren: str, **kwargs) -> Optional[Dict[str, Any]]:
+    def get_extrait_kbis(self, siren: str, **kwargs) -> dict[str, Any] | None:
         """Get official Extrait K-bis for a company.
 
         The Extrait K-bis is the official company extract from the commercial registry.
@@ -244,7 +248,9 @@ class InfogreffeBackend(FrenchBaseBackend):
         rcs_clean = rcs.replace(" ", "").upper()
         return rcs_clean
 
-    def _call_api(self, endpoint: str, params: Optional[Dict[str, Any]] = None) -> Optional[Dict[str, Any]]:
+    def _call_api(
+        self, endpoint: str, params: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
         """Make API call to Infogreffe service.
 
         Args:
@@ -263,7 +269,7 @@ class InfogreffeBackend(FrenchBaseBackend):
         # Note: Infogreffe may require web scraping if no official API is available
         return None
 
-    def _parse_search_results(self, response: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _parse_search_results(self, response: dict[str, Any]) -> list[dict[str, Any]]:
         """Parse Infogreffe search API response.
 
         Args:
@@ -275,7 +281,7 @@ class InfogreffeBackend(FrenchBaseBackend):
         # TODO: Implement response parsing
         return []
 
-    def _parse_kbis(self, response: Dict[str, Any]) -> Dict[str, Any]:
+    def _parse_kbis(self, response: dict[str, Any]) -> dict[str, Any]:
         """Parse Extrait K-bis response.
 
         Args:
@@ -286,4 +292,3 @@ class InfogreffeBackend(FrenchBaseBackend):
         """
         # TODO: Implement response parsing
         return {}
-
