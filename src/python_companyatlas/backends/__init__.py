@@ -14,6 +14,7 @@ from .base import BaseBackend, get_country_flag_emoji, get_country_flag_image_ba
 
 # Import country-specific backends
 from .europe.france import (
+    BODACCBackend,
     CCIBackend,
     EntDataGouvBackend,
     EspaceDocsBackend,
@@ -45,6 +46,7 @@ __all__ = [
     "get_country_flag_emoji",
     "get_country_flag_image_base64",
     "FrenchBaseBackend",
+    "BODACCBackend",
     "INSEEBackend",
     "EntDataGouvBackend",
     "PappersBackend",

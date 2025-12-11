@@ -23,12 +23,15 @@ class OpendatasoftBackend(FrenchBaseBackend):
     """
 
     name = "opendatasoft"
-    backend_name = "opendatasoft"
     display_name = "Opendatasoft"
     description_text = "Open data platform aggregating French public datasets"
 
     config_keys = ["api_key", "dataset_id"]
     required_packages = ["requests"]
+
+    can_fetch_documents = False
+    can_fetch_events = False
+    can_fetch_company_data = True
 
     documentation_url = "https://help.opendatasoft.com/apis/ods-search-api"
     site_url = "https://data.opendatasoft.com"
@@ -36,41 +39,14 @@ class OpendatasoftBackend(FrenchBaseBackend):
     api_url = "https://data.opendatasoft.com/api/explore/v2.1"
 
     def __init__(self, config: dict[str, Any] | None = None):
-        """Initialize Opendatasoft backend.
-
-        Args:
-            config: Configuration dictionary with:
-                - api_key: Opendatasoft API key (optional, may be required for some datasets)
-                - base_url: Base URL for Opendatasoft API
-                - dataset_id: Default dataset ID to use
-        """
+        """Initialize Opendatasoft backend."""
         super().__init__(config)
         self.api_key = self.config.get("api_key")
+        self.dataset_id = self.config.get("dataset_id")
         self.base_url = self.config.get("base_url", self.api_url)
-        self.dataset_id = self.config.get("dataset_id", "sirene@public")
 
     def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
-        """Search for companies by name using Opendatasoft datasets.
-
-        Args:
-            name: Company name to search for
-            **kwargs: Additional parameters:
-                - limit: Maximum number of results (default: 20, max: 100)
-                - dataset_id: Specific dataset ID to search (default: SIRENE)
-                - departement: Filter by French department code
-                - code_naf: Filter by NAF code
-                - active_only: Only return active companies (default: False)
-
-        Returns:
-            List of company dictionaries with:
-                - siren: SIREN number
-                - name: Company name (denomination)
-                - legal_form: Legal form
-                - status: Company status
-                - address: Registered address
-                - creation_date: Company creation date
-                - activity: NAF code and activity description
-        """
+        """Search for companies by name on Opendatasoft."""
         if not name or not isinstance(name, str):
             return []
 
@@ -80,46 +56,12 @@ class OpendatasoftBackend(FrenchBaseBackend):
         kwargs.get("code_naf")
         kwargs.get("active_only", False)
 
-        # TODO: Implement actual Opendatasoft API call
-        # Example:
-        # params = {
-        #     "dataset": dataset_id,
-        #     "q": name,
-        #     "rows": limit,
-        #     "refine.etatadministratifunitelegale": "A" if active_only else None,
-        # }
-        # if departement:
-        #     params["refine.departementunitelegale"] = departement
-        # if code_naf:
-        #     params["refine.activiteprincipaleunitelegale"] = code_naf
-        #
-        # response = self._call_api("catalog/datasets", params=params)
-        # return self._parse_search_results(response)
-
         return []
 
     def search_by_code(
         self, code: str, code_type: str | None = None, **kwargs
     ) -> dict[str, Any] | None:
-        """Search for a company by SIREN using Opendatasoft datasets.
-
-        Args:
-            code: SIREN number (9 digits)
-            code_type: Should be "siren" or None (RNA not supported in default dataset)
-            **kwargs: Additional parameters:
-                - dataset_id: Specific dataset ID to search
-
-        Returns:
-            Dictionary with company information, or None if not found.
-            Contains:
-                - siren: SIREN number
-                - name: Company name
-                - legal_form: Legal form
-                - status: Company status
-                - address: Full registered address
-                - creation_date: Company creation date
-                - activity: NAF code and activity description
-        """
+        """Search for a company by SIREN using Opendatasoft datasets."""
         if code_type and code_type != "siren":
             raise ValueError(
                 f"Opendatasoft default dataset only supports SIREN codes, not {code_type}"
@@ -131,208 +73,25 @@ class OpendatasoftBackend(FrenchBaseBackend):
 
         kwargs.get("dataset_id", self.dataset_id)
 
-        # TODO: Implement actual Opendatasoft API call
-        # Example:
-        # params = {
-        #     "dataset": dataset_id,
-        #     "q": f"siren:{siren}",
-        #     "rows": 1,
-        # }
-        # response = self._call_api("catalog/datasets", params=params)
-        # if response and response.get("results"):
-        #     return self._parse_company_data(response["results"][0])
-
-        return None
-
-    def get_documents(
-        self, identifier: str, document_type: str | None = None, **kwargs
-    ) -> list[dict[str, Any]]:
-        """Get official documents/publications from Opendatasoft datasets.
-
-        Opendatasoft provides access to various document datasets including:
-        - BODACC publications
-        - BALO publications
-        - Other official publications
-
-        Args:
-            identifier: Entity identifier (SIREN)
-            document_type: Type of document ("bodacc", "balo", or None for all)
-            **kwargs: Additional filters:
-                - date_from: Start date (ISO format or datetime)
-                - date_to: End date (ISO format or datetime)
-                - dataset_id: Specific dataset ID for documents
-                - category: Document category
-
-        Returns:
-            List of document dictionaries with:
-                - type: Document type
-                - title: Document title
-                - date: Publication date (ISO format)
-                - url: URL to access the document
-                - source: Document source dataset
-                - Additional document-specific metadata
-        """
-        if not identifier:
-            return []
-
-        siren = self.format_siren(identifier)
-        if not self.validate_siren(siren):
-            return []
-
-        date_from = kwargs.get("date_from")
-        date_to = kwargs.get("date_to")
-        dataset_id = kwargs.get("dataset_id")
-        category = kwargs.get("category")
-
-        # Convert datetime to ISO string if needed
-        if isinstance(date_from, datetime):
-            date_from = date_from.isoformat()
-        if isinstance(date_to, datetime):
-            date_to = date_to.isoformat()
-
-        documents = []
-
-        # BODACC documents
-        if not document_type or document_type == "bodacc":
-            bodacc_dataset = dataset_id or "bodacc@public"
-            bodacc_docs = self._get_documents_from_dataset(
-                siren, bodacc_dataset, "bodacc", date_from, date_to, category
-            )
-            documents.extend(bodacc_docs)
-
-        # BALO documents
-        if not document_type or document_type == "balo":
-            balo_dataset = dataset_id or "balo@public"
-            balo_docs = self._get_documents_from_dataset(
-                siren, balo_dataset, "balo", date_from, date_to, category
-            )
-            documents.extend(balo_docs)
-
-        return documents
-
-    def _get_documents_from_dataset(
-        self,
-        siren: str,
-        dataset_id: str,
-        document_type: str,
-        date_from: str | None = None,
-        date_to: str | None = None,
-        category: str | None = None,
-    ) -> list[dict[str, Any]]:
-        """Get documents from a specific Opendatasoft dataset.
-
-        Args:
-            siren: SIREN number
-            dataset_id: Dataset ID to query
-            document_type: Type of document
-            date_from: Start date filter
-            date_to: End date filter
-            category: Document category filter
-
-        Returns:
-            List of document dictionaries
-        """
-        # TODO: Implement actual Opendatasoft API call
-        # params = {
-        #     "dataset": dataset_id,
-        #     "q": f"siren:{siren}",
-        #     "rows": 100,
-        # }
-        # if date_from:
-        #     params["refine.date_publication"] = f">={date_from}"
-        # if date_to:
-        #     params["refine.date_publication"] = f"<={date_to}"
-        # if category:
-        #     params["refine.categorie"] = category
-        #
-        # response = self._call_api("catalog/datasets", params=params)
-        # return self._parse_documents(response, document_type)
-
-        return []
-
-    def list_available_datasets(self, **kwargs) -> list[dict[str, Any]]:
-        """List available datasets on Opendatasoft platform.
-
-        Args:
-            **kwargs: Additional parameters:
-                - search: Search term for dataset names
-                - country: Filter by country code
-
-        Returns:
-            List of dataset dictionaries with:
-                - id: Dataset ID
-                - name: Dataset name
-                - description: Dataset description
-                - source: Data source
-                - last_update: Last update date
-        """
-        # TODO: Implement actual Opendatasoft API call
-        # params = {}
-        # if kwargs.get("search"):
-        #     params["q"] = kwargs["search"]
-        # if kwargs.get("country"):
-        #     params["refine.country"] = kwargs["country"]
-        #
-        # response = self._call_api("catalog/datasets", params=params)
-        # return self._parse_datasets(response)
 
         return []
 
     def _call_api(
         self, endpoint: str, params: dict[str, Any] | None = None
     ) -> dict[str, Any] | None:
-        """Make API call to Opendatasoft service.
-
-        Args:
-            endpoint: API endpoint path
-            params: Query parameters
-
-        Returns:
-            API response as dictionary, or None on error
-        """
-        # TODO: Implement actual HTTP request
-        # Should handle:
-        # - API key authentication if required
-        # - Rate limiting
-        # - Error handling
-        # - Response parsing
+        """Make API call to Opendatasoft service."""
         return None
 
     def _parse_search_results(self, response: dict[str, Any]) -> list[dict[str, Any]]:
-        """Parse Opendatasoft search API response.
-
-        Args:
-            response: Raw API response
-
-        Returns:
-            List of parsed company data dictionaries
-        """
-        # TODO: Implement response parsing
+        """Parse Opendatasoft search API response."""
         return []
 
     def _parse_company_data(self, response: dict[str, Any]) -> dict[str, Any]:
-        """Parse Opendatasoft company data response.
-
-        Args:
-            response: Raw API response
-
-        Returns:
-            Parsed company data dictionary
-        """
-        # TODO: Implement response parsing
+        """Parse Opendatasoft company data response."""
         return {}
 
     def _parse_documents(
         self, response: dict[str, Any], document_type: str
     ) -> list[dict[str, Any]]:
-        """Parse Opendatasoft documents API response.
-
-        Args:
-            response: Raw API response
-            document_type: Type of documents being parsed
-
-        Returns:
-            List of parsed document dictionaries
-        """
-        # TODO: Implement response parsing
+        """Parse Opendatasoft documents API response."""
         return []

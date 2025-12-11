@@ -31,10 +31,6 @@ class CompanyAtlas:
 
         domain = domain.strip().lower()
 
-        # Basic domain validation regex
-        # Allows: alphanumeric, hyphens, dots
-        # Must have at least one dot
-        # TLD must be at least 2 characters
         domain_pattern = r"^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$"
         if not re.match(domain_pattern, domain):
             raise ValueError(
@@ -42,11 +38,9 @@ class CompanyAtlas:
                 "Domain must be a valid hostname (e.g., 'example.com')"
             )
 
-        # Additional security: prevent overly long domains
-        if len(domain) > 253:  # RFC 1035 max domain length
+        if len(domain) > 253:
             raise ValueError("Domain name too long (max 253 characters)")
 
-        # Prevent common injection patterns
         if any(char in domain for char in ["/", "\\", ":", "?", "#", "[", "]", "@", "!"]):
             raise ValueError("Domain contains invalid characters")
 
@@ -64,7 +58,6 @@ class CompanyAtlas:
         """
         self._validate_domain(domain)
 
-        # TODO: Implement actual lookup logic
         return {
             "domain": domain,
             "name": f"Company for {domain}",
@@ -80,7 +73,6 @@ class CompanyAtlas:
         Returns:
             Enriched company information
         """
-        # TODO: Implement enrichment logic
         enriched = company_data.copy()
         enriched["enriched"] = True
         return enriched

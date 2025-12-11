@@ -66,12 +66,9 @@ def get_country_flag_emoji(country_code: str) -> str:
 
     country_code = country_code.upper()
 
-    # Validate that both characters are letters
     if not country_code.isalpha():
         return ""
 
-    # Use Regional Indicator Symbols (U+1F1E6 to U+1F1FF)
-    # Each letter A-Z maps to U+1F1E6 + (ord(letter) - ord('A'))
     try:
         flag_emoji = "".join(chr(ord("🇦") + ord(letter) - ord("A")) for letter in country_code)
         return flag_emoji
@@ -95,7 +92,6 @@ def get_country_flag_image_base64(country_code: str, size: tuple | None = None) 
 
     country_code = country_code.upper()
 
-    # Get country name from mapping
     country_name = _COUNTRY_CODE_TO_NAME.get(country_code)
     if not country_name:
         return ""
@@ -106,30 +102,24 @@ def get_country_flag_image_base64(country_code: str, size: tuple | None = None) 
 
         import flagpy as fp
 
-        # Get flag image
         img = fp.get_flag_img(country_name)
 
-        # Resize if requested
         if size:
             img = img.resize(
                 size, resample=img.__class__.LANCZOS if hasattr(img.__class__, "LANCZOS") else 1
             )
         else:
-            # Default small size for admin display
             img = img.resize(
                 (32, 16), resample=img.__class__.LANCZOS if hasattr(img.__class__, "LANCZOS") else 1
             )
 
-        # Convert to base64
         buffer = BytesIO()
         img.save(buffer, format="PNG")
         img_str = base64.b64encode(buffer.getvalue()).decode()
         return f"data:image/png;base64,{img_str}"
     except ImportError:
-        # flagpy not installed, fallback to emoji
         return ""
     except Exception:
-        # Any other error, return empty
         return ""
 
 
@@ -141,60 +131,42 @@ class BaseBackend(ABC):
     abstract methods.
     """
 
-    # Backend metadata
     name: str = "base"
     display_name: str | None = None
     description_text: str | None = None
     continent: str | None = None
 
-    # Configuration
     config_keys: list[str] = []
     required_packages: list[str] = []
 
-    # URLs
     status_url: str | None = None
     documentation_url: str | None = None
     site_url: str | None = None
     api_url: str | None = None
 
-    def __init__(self, config: dict[str, Any] | None = None):
-        """Initialize backend with configuration.
+    can_fetch_documents: bool = False
+    can_fetch_events: bool = False
+    can_fetch_company_data: bool = True
 
-        Args:
-            config: Configuration dictionary with API keys, endpoints, etc.
-        """
+    def __init__(self, config: dict[str, Any] | None = None):
+        """Initialize backend with configuration."""
         self._raw_config: dict[str, Any] = dict(config or {})
         self._config: dict[str, Any] = self._filter_config(self._raw_config)
 
     def _filter_config(self, config: dict[str, Any]) -> dict[str, Any]:
-        """Extract the subset of config keys declared by the backend.
-
-        Args:
-            config: Raw configuration dictionary
-
-        Returns:
-            Filtered configuration dictionary containing only declared config_keys
-        """
+        """Extract the subset of config keys declared by the backend."""
         if not self.config_keys:
             return dict(config)
         return {key: config[key] for key in self.config_keys if key in config}
 
     @property
     def config(self) -> dict[str, Any]:
-        """Access configuration values.
-
-        Returns:
-            Filtered configuration dictionary
-        """
+        """Access configuration values."""
         return self._config
 
     @property
     def label(self) -> str:
-        """Human-friendly backend name.
-
-        Returns:
-            Display name or formatted name
-        """
+        """Human-friendly backend name."""
         if self.display_name:
             return self.display_name
         if self.name:
@@ -202,15 +174,7 @@ class BaseBackend(ABC):
         return self.__class__.__name__
 
     def configure(self, config: dict[str, Any], *, replace: bool = False) -> "BaseBackend":
-        """Update backend configuration (filtered by config_keys).
-
-        Args:
-            config: Configuration dictionary to merge or replace
-            replace: If True, replace existing config; otherwise merge
-
-        Returns:
-            Self for method chaining
-        """
+        """Update backend configuration."""
         if replace:
             self._raw_config = dict(config or {})
         else:
@@ -219,19 +183,11 @@ class BaseBackend(ABC):
         return self
 
     def check_package(self, package_name: str) -> bool:
-        """Check if a required package is installed.
-
-        Args:
-            package_name: Name of the package to check
-
-        Returns:
-            True if the package can be imported, False otherwise
-        """
+        """Check if a required package is installed."""
         try:
             importlib.import_module(package_name)
             return True
         except ImportError:
-            # Try with hyphens replaced by underscores (e.g., sib-api-v3-sdk -> sib_api_v3_sdk)
             try:
                 importlib.import_module(package_name.replace("-", "_"))
                 return True
@@ -239,51 +195,30 @@ class BaseBackend(ABC):
                 return False
 
     def check_required_packages(self) -> dict[str, bool]:
-        """Check all required packages and return their installation status.
-
-        Returns:
-            Dict mapping package names to their installation status
-        """
+        """Check all required packages and return their installation status."""
         return {package: self.check_package(package) for package in self.required_packages}
 
     def check_config_keys(self, config: dict[str, Any] | None = None) -> dict[str, bool]:
-        """Check if all config_keys are present in the provided configuration.
-
-        Args:
-            config: Configuration dict to check (defaults to self._raw_config)
-
-        Returns:
-            Dict mapping config key names to their presence status
-        """
+        """Check if all config_keys are present in the provided configuration."""
         if config is None:
             config = self._raw_config
         return {key: key in config for key in self.config_keys}
 
     def check_package_and_config(self, config: dict[str, Any] | None = None) -> dict[str, Any]:
-        """Check both required packages and configuration keys.
+        """Check both required packages and configuration keys."""
+        if config is None:
+            config = self._raw_config
+        return {key: key in config for key in self.config_keys}
 
-        Args:
-            config: Configuration dict to check (defaults to self._raw_config)
-
-        Returns:
-            Dict with 'packages' and 'config' keys containing their respective status dicts
-        """
+    def check_package_and_config(self, config: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Check both required packages and configuration keys."""
         return {
             "packages": self.check_required_packages(),
             "config": self.check_config_keys(config),
         }
 
     def get_status(self) -> dict[str, Any]:
-        """Get backend status and availability information.
-
-        Returns:
-            Dictionary with status information including:
-                - status: Current status ("working", "unavailable", "missing_config", etc.)
-                - is_available: Boolean indicating if backend is operational
-                - packages: Package installation status
-                - config: Configuration status
-                - warnings: List of warnings
-        """
+        """Get backend status and availability information."""
         check = self.check_package_and_config()
         packages = check.get("packages", {})
         config_status = check.get("config", {})
@@ -303,8 +238,8 @@ class BaseBackend(ABC):
         return {
             "status": status,
             "is_available": status == "available",
-            "backend_name": self.name,
-            "backend_display_name": self.label,
+            "name": self.name,
+            "display_name": self.label,
             "country_code": country_code,
             "country_flag": self.get_country_flag(),
             "country_flag_image": self.get_country_flag_image_base64(),
@@ -316,6 +251,9 @@ class BaseBackend(ABC):
             "documentation_url": self.documentation_url,
             "site_url": self.site_url,
             "status_url": self.status_url,
+            "can_fetch_documents": self.can_fetch_documents,
+            "can_fetch_events": self.can_fetch_events,
+            "can_fetch_company_data": self.can_fetch_company_data,
         }
 
     def validate(self) -> tuple[bool, str]:
@@ -348,114 +286,78 @@ class BaseBackend(ABC):
 
     @abstractmethod
     def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
-        """Search for companies/entities by name.
-
-        This is a generic search that works with company names like "tour eiffel".
-
-        Args:
-            name: Company or entity name to search for
-            **kwargs: Additional search parameters (country-specific)
-
-        Returns:
-            List of dictionaries containing company/entity information.
-            Each dict should contain at minimum:
-                - name: Company name
-                - identifier: Primary identifier (SIREN, CRN, etc.)
-                - country: ISO country code
-        """
+        """Search for companies/entities by name."""
         pass
 
-    @abstractmethod
     def search_by_code(
         self, code: str, code_type: str | None = None, **kwargs
     ) -> dict[str, Any] | None:
-        """Search for a company/entity by its registration code.
+        """Search for a company/entity by its registration code."""
+        raise NotImplementedError(
+            f"Backend {self.name} does not support fetching company data"
+        )
 
-        This is a specific search using official registration codes like SIREN, RNA, etc.
-
-        Args:
-            code: Registration code (e.g., SIREN, RNA, CRN)
-            code_type: Type of code (optional, backend may auto-detect)
-            **kwargs: Additional search parameters
-
-        Returns:
-            Dictionary with company/entity information, or None if not found.
-            Should contain:
-                - name: Company name
-                - identifier: The registration code
-                - identifier_type: Type of identifier used
-                - country: ISO country code
-                - Additional country-specific fields
-        """
-        pass
-
-    @abstractmethod
     def get_documents(
         self, identifier: str, document_type: str | None = None, **kwargs
     ) -> list[dict[str, Any]]:
-        """Get official documents/publications for a company/entity.
+        """Get official documents/publications for a company/entity."""
+        raise NotImplementedError(
+            f"Backend {self.name} does not support fetching documents"
+        )
 
-        This retrieves official publications like BODACC, BALO, etc.
+    def get_events(
+        self, identifier: str, event_type: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
+        """Get events/changes for a company/entity."""
+        raise NotImplementedError(
+            f"Backend {self.name} does not support fetching events"
+        )
 
-        Args:
-            identifier: Company identifier (SIREN, etc.)
-            document_type: Type of document to retrieve (optional, may return all types)
-            **kwargs: Additional filters (date range, document category, etc.)
+    def fetch_data(
+        self, identifier: str, code_type: str | None = None, **kwargs
+    ) -> dict[str, Any] | None:
+        """Fetch company/entity data by identifier."""
+        if not self.can_fetch_company_data:
+            raise NotImplementedError(
+                f"Backend {self.name} does not support fetching company data"
+            )
+        return self.search_by_code(identifier, code_type=code_type, **kwargs)
 
-        Returns:
-            List of document dictionaries. Each dict should contain:
-                - type: Document type (e.g., "bodacc", "balo")
-                - title: Document title
-                - date: Publication date (ISO format)
-                - url: URL to access the document (if available)
-                - Additional document-specific metadata
-        """
-        pass
+    def fetch_documents(
+        self, identifier: str, document_type: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
+        """Fetch documents for a company/entity by identifier."""
+        if not self.can_fetch_documents:
+            raise NotImplementedError(
+                f"Backend {self.name} does not support fetching documents"
+            )
+        return self.get_documents(identifier, document_type=document_type, **kwargs)
+
+    def fetch_events(
+        self, identifier: str, event_type: str | None = None, **kwargs
+    ) -> list[dict[str, Any]]:
+        """Fetch events/changes for a company/entity by identifier."""
+        if not self.can_fetch_events:
+            raise NotImplementedError(
+                f"Backend {self.name} does not support fetching events"
+            )
+        return self.get_events(identifier, event_type=event_type, **kwargs)
 
     def get_country_code(self) -> str:
-        """Get the ISO country code for this backend.
-
-        Returns:
-            ISO 3166-1 alpha-2 country code (e.g., "FR", "GB", "US")
-        """
+        """Get the ISO country code for this backend."""
         return getattr(self, "country_code", "XX")
 
     def get_country_flag(self) -> str:
-        """Get the country flag emoji for this backend.
-
-        Returns:
-            Country flag emoji Unicode string (e.g., "🇫🇷" for France)
-            Returns empty string if country code is invalid
-        """
+        """Get the country flag emoji for this backend."""
         country_code = self.get_country_code()
         return get_country_flag_emoji(country_code)
 
     def get_country_flag_image_base64(self, size: tuple | None = None) -> str:
-        """Get the country flag as base64-encoded image for this backend.
-
-        Args:
-            size: Optional tuple (width, height) to resize the image. Default is (32, 16).
-
-        Returns:
-            Base64-encoded image data URL string (e.g., "data:image/png;base64,...")
-            Returns empty string if country code is invalid or flagpy is not available
-        """
+        """Get the country flag as base64-encoded image for this backend."""
         country_code = self.get_country_code()
         return get_country_flag_image_base64(country_code, size=size)
 
     def get_continent(self) -> str | None:
-        """Get the continent for this backend.
-
-        Returns:
-            Continent name (e.g., "europe", "americas", "asia", "africa", "oceania")
-            or None if not specified
-        """
+        """Get the continent for this backend."""
         return getattr(self, "continent", None)
 
-    def get_backend_name(self) -> str:
-        """Get the name of this backend.
-
-        Returns:
-            Backend name identifier
-        """
-        return getattr(self, "backend_name", self.name)

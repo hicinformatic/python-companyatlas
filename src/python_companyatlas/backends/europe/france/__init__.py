@@ -17,6 +17,7 @@ This module contains backends for retrieving French company data from various so
 """
 
 from .base import FrenchBaseBackend
+from .bodacc import BODACCBackend
 from .cci import CCIBackend
 from .entdatagouv import EntDataGouvBackend
 from .espacedocs import EspaceDocsBackend
@@ -33,6 +34,7 @@ from .verif import VerifBackend
 
 __all__ = [
     "FrenchBaseBackend",
+    "BODACCBackend",
     "INSEEBackend",
     "EntDataGouvBackend",
     "PappersBackend",
