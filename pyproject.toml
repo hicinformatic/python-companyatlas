@@ -11,6 +11,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
+    "requests>=2.31.0",
     # flagpy is optional but recommended for flag image support
     # Falls back to emoji if not installed
 ]
@@ -33,6 +34,9 @@ countries = [
 
 [project.urls]
 Homepage = "https://github.com/yourusername/python-companyatlas"
+
+[project.scripts]
+companyatlas = "python_companyatlas.cli:main"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

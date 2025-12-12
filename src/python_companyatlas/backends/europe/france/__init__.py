@@ -8,19 +8,12 @@ This module contains backends for retrieving French company data from various so
 - Opendatasoft (open data platform)
 - INPI (Institut National de la Propriété Industrielle)
 - Societe.com (company data aggregator)
-- Verif.com (company verification)
-- SocieteInfo (B2B data enrichment)
-- CCI (Chambres de Commerce et d'Industrie)
-- SocieteData (legal and financial data)
 - Pharow (B2B data aggregation)
-- EspaceDocs (official documents)
 """
 
 from .base import FrenchBaseBackend
 from .bodacc import BODACCBackend
-from .cci import CCIBackend
 from .entdatagouv import EntDataGouvBackend
-from .espacedocs import EspaceDocsBackend
 from .infogreffe import InfogreffeBackend
 from .inpi import INPIBackend
 from .insee import INSEEBackend
@@ -28,9 +21,6 @@ from .opendatasoft import OpendatasoftBackend
 from .pappers import PappersBackend
 from .pharow import PharowBackend
 from .societecom import SocieteComBackend
-from .societedata import SocieteDataBackend
-from .societeinfo import SocieteInfoBackend
-from .verif import VerifBackend
 
 __all__ = [
     "FrenchBaseBackend",
@@ -42,10 +32,5 @@ __all__ = [
     "OpendatasoftBackend",
     "INPIBackend",
     "SocieteComBackend",
-    "VerifBackend",
-    "SocieteInfoBackend",
-    "CCIBackend",
-    "SocieteDataBackend",
     "PharowBackend",
-    "EspaceDocsBackend",
 ]

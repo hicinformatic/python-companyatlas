@@ -29,6 +29,12 @@ class INPIBackend(FrenchBaseBackend):
     can_fetch_events = False
     can_fetch_company_data = True
 
+    request_cost = {
+        "data": 5.0,
+        "documents": 5.0,
+        "events": "free",
+    }
+
     documentation_url = "https://www.inpi.fr/fr/services-et-outils/api"
     site_url = "https://www.inpi.fr"
     status_url = None
@@ -37,10 +43,10 @@ class INPIBackend(FrenchBaseBackend):
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize INPI backend."""
         super().__init__(config)
-        self.api_key = self.config.get("api_key")
-        self.username = self.config.get("username")
-        self.password = self.config.get("password")
-        self.base_url = self.config.get("base_url", self.api_url)
+        self.api_key = self._get_config_or_env("api_key")
+        self.username = self._get_config_or_env("username")
+        self.password = self._get_config_or_env("password")
+        self.base_url = self._get_config_or_env("base_url", default=self.api_url)
 
     def search_by_code(
         self, code: str, code_type: str | None = None, **kwargs

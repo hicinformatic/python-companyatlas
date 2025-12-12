@@ -1,12 +1,10 @@
 """Helper functions for discovering and managing backends."""
 
-from typing import Any
+from typing import Any, Literal
 
 from . import (
     BODACCBackend,
-    CCIBackend,
     EntDataGouvBackend,
-    EspaceDocsBackend,
     InfogreffeBackend,
     INPIBackend,
     INSEEBackend,
@@ -14,9 +12,6 @@ from . import (
     PappersBackend,
     PharowBackend,
     SocieteComBackend,
-    SocieteDataBackend,
-    SocieteInfoBackend,
-    VerifBackend,
 )
 from .base import BaseBackend
 
@@ -30,12 +25,7 @@ _ALL_BACKEND_CLASSES = [
     OpendatasoftBackend,
     INPIBackend,
     SocieteComBackend,
-    VerifBackend,
-    SocieteInfoBackend,
-    CCIBackend,
-    SocieteDataBackend,
     PharowBackend,
-    EspaceDocsBackend,
 ]
 
 
@@ -248,6 +238,137 @@ def search_backends(
     return get_backends(config=config, search=query, **filters)
 
 
+def search_companies(
+    query: str,
+    config: dict[str, Any] | None = None,
+    *,
+    country_code: str | None = None,
+    backend: str | None = None,
+    fetch: Literal["data", "documents", "events"] = "data",
+    limit: int = 20,
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Search for companies using backends until one responds.
+
+    Args:
+        query: Company name or identifier to search for.
+        config: Optional configuration dictionary to pass to all backends.
+        country_code: Optional ISO country code to filter backends (e.g., "FR").
+        backend: Optional backend name to use exclusively (e.g., "entdatagouv").
+        fetch: Type of data to fetch - "data", "documents", or "events" (default: "data").
+        limit: Maximum number of results to return (default: 20).
+        **kwargs: Additional options passed to backend methods.
+
+    Returns:
+        Dictionary with search results:
+        - results (list): List of matching results.
+        - total (int): Total number of results found.
+        - backend_used (str): Name of the backend that provided results.
+        - error (str, optional): Error message if search failed.
+        - errors (list, optional): List of error messages.
+    """
+    if not query or not isinstance(query, str):
+        return {
+            "results": [],
+            "total": 0,
+            "error": "Empty or invalid query",
+            "errors": ["Query string is required"],
+        }
+
+    filters: dict[str, Any] = {}
+    if country_code:
+        filters["country_code"] = country_code
+
+    if fetch == "data":
+        filters["can_fetch_company_data"] = True
+    elif fetch == "documents":
+        filters["can_fetch_documents"] = True
+    elif fetch == "events":
+        filters["can_fetch_events"] = True
+
+    backend_statuses = get_backends(config=config, **filters)
+
+    if backend:
+        backend_statuses = [
+            s for s in backend_statuses if s.get("name", "").lower() == backend.lower()
+        ]
+        if not backend_statuses:
+            available_backends = ", ".join(
+                sorted(set(s.get("name", "unknown") for s in get_backends(config=config)))
+            )
+            return {
+                "results": [],
+                "total": 0,
+                "error": f"Backend '{backend}' not found",
+                "errors": [
+                    f"Backend '{backend}' is not available. Available backends: {available_backends}"
+                ],
+            }
+
+    if not backend_statuses:
+        return {
+            "results": [],
+            "total": 0,
+            "error": "No working backends found",
+            "errors": ["No backends are properly configured"],
+        }
+
+    def get_cost_value(status: dict[str, Any]) -> float:
+        """Get cost value for sorting (free = 0.0, numeric cost otherwise)."""
+        request_cost = status.get("request_cost", {})
+        cost = request_cost.get(fetch, "free")
+        if cost == "free":
+            return 0.0
+        if isinstance(cost, (int, float)):
+            return float(cost)
+        return 999.0
+
+    backend_statuses.sort(key=get_cost_value)
+
+    backend_classes = get_all_backend_classes()
+    backend_class_map = {cls.name: cls for cls in backend_classes if cls.name}
+
+    errors: list[str] = []
+    for status in backend_statuses:
+        backend_name = status.get("name")
+        if not backend_name or not status.get("is_available"):
+            continue
+
+        backend_class = backend_class_map.get(backend_name)
+        if not backend_class:
+            continue
+
+        backend_instance = backend_class(config=config)
+
+        try:
+            if fetch == "data":
+                results = backend_instance.search_by_name(query, limit=limit, **kwargs)
+            elif fetch == "documents":
+                results = backend_instance.get_documents(query, limit=limit, **kwargs)
+            elif fetch == "events":
+                results = backend_instance.get_events(query, limit=limit, **kwargs)
+            else:
+                continue
+
+            if results:
+                return {
+                    "results": results if isinstance(results, list) else [results],
+                    "total": len(results) if isinstance(results, list) else 1,
+                    "backend_used": backend_name,
+                }
+
+        except Exception as e:
+            errors.append(f"{backend_name}: {str(e)}")
+            continue
+
+    return {
+        "results": [],
+        "total": 0,
+        "error": "No results found from any backend",
+        "errors": errors if errors else ["All backends failed to return results"],
+    }
+
+
 __all__ = [
     "get_all_backend_classes",
     "get_all_backends",
@@ -256,4 +377,5 @@ __all__ = [
     "get_backends_by_continent",
     "get_backends_by_country",
     "search_backends",
+    "search_companies",
 ]

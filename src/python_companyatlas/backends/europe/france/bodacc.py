@@ -38,6 +38,12 @@ class BODACCBackend(FrenchBaseBackend):
     can_fetch_events = True
     can_fetch_company_data = False
 
+    request_cost = {
+        "data": "free",
+        "documents": "free",
+        "events": "free",
+    }
+
     documentation_url = "https://www.data.gouv.fr/fr/datasets/bodacc/"
     site_url = "https://www.bodacc.fr"
     status_url = None
@@ -46,8 +52,8 @@ class BODACCBackend(FrenchBaseBackend):
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize BODACC backend."""
         super().__init__(config)
-        self.api_key = self.config.get("api_key")
-        self.base_url = self.config.get("base_url", self.api_url)
+        self.api_key = self._get_config_or_env("api_key")
+        self.base_url = self._get_config_or_env("base_url", default=self.api_url)
 
     def get_documents(
         self, identifier: str, document_type: str | None = None, **kwargs

@@ -33,6 +33,12 @@ class PappersBackend(FrenchBaseBackend):
     can_fetch_events = True
     can_fetch_company_data = True
 
+    request_cost = {
+        "data": 5.0,
+        "documents": 5.0,
+        "events": 5.0,
+    }
+
     documentation_url = "https://www.pappers.fr/api/documentation"
     site_url = "https://www.pappers.fr"
     status_url = "https://www.pappers.fr/api/status"
@@ -41,8 +47,8 @@ class PappersBackend(FrenchBaseBackend):
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize Pappers backend."""
         super().__init__(config)
-        self.api_key = self.config.get("api_key")
-        self.base_url = self.config.get("base_url", self.api_url)
+        self.api_key = self._get_config_or_env("api_key")
+        self.base_url = self._get_config_or_env("base_url", default=self.api_url)
 
     def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
         """Search for companies by name on Pappers."""

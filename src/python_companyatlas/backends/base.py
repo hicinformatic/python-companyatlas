@@ -1,6 +1,7 @@
 """Base backend class with generic functions for all country backends."""
 
 import importlib
+import os
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -148,6 +149,12 @@ class BaseBackend(ABC):
     can_fetch_events: bool = False
     can_fetch_company_data: bool = True
 
+    request_cost: dict[str, str | float] = {
+        "data": "free",
+        "documents": "free",
+        "events": "free",
+    }
+
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize backend with configuration."""
         self._raw_config: dict[str, Any] = dict(config or {})
@@ -182,6 +189,32 @@ class BaseBackend(ABC):
         self._config = self._filter_config(self._raw_config)
         return self
 
+    def _get_config_or_env(self, key: str, default: Any = None) -> Any:
+        """Get config value from config dict or environment variable.
+
+        Priority order:
+        1. Config dict (highest priority)
+        2. Environment variable
+        3. Default parameter (lowest priority)
+
+        Environment variable name format: COMPANYATLAS_{BACKEND_NAME}_{KEY}
+        (all uppercase, underscores).
+
+        Args:
+            key: Configuration key name
+            default: Default value if not found in config or env
+
+        Returns:
+            Configuration value from config, env, or default
+        """
+        value = self.config.get(key)
+        if value is not None:
+            return value
+
+        backend_name = self.name.upper().replace("-", "_")
+        env_key = f"COMPANYATLAS_{backend_name}_{key.upper()}"
+        return os.getenv(env_key, default)
+
     def check_package(self, package_name: str) -> bool:
         """Check if a required package is installed."""
         try:
@@ -199,10 +232,18 @@ class BaseBackend(ABC):
         return {package: self.check_package(package) for package in self.required_packages}
 
     def check_config_keys(self, config: dict[str, Any] | None = None) -> dict[str, bool]:
-        """Check if all config_keys are present in the provided configuration."""
+        """Check if all config_keys are present in the provided configuration or environment."""
         if config is None:
             config = self._raw_config
-        return {key: key in config for key in self.config_keys}
+        result = {}
+        for key in self.config_keys:
+            if key in config and config[key] is not None:
+                result[key] = True
+            else:
+                backend_name = self.name.upper().replace("-", "_")
+                env_key = f"COMPANYATLAS_{backend_name}_{key.upper()}"
+                result[key] = os.getenv(env_key) is not None
+        return result
 
     def check_package_and_config(self, config: dict[str, Any] | None = None) -> dict[str, Any]:
         """Check both required packages and configuration keys."""
@@ -254,6 +295,7 @@ class BaseBackend(ABC):
             "can_fetch_documents": self.can_fetch_documents,
             "can_fetch_events": self.can_fetch_events,
             "can_fetch_company_data": self.can_fetch_company_data,
+            "request_cost": self.request_cost,
         }
 
     def validate(self) -> tuple[bool, str]:

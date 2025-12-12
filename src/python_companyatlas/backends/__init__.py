@@ -15,9 +15,7 @@ from .base import BaseBackend, get_country_flag_emoji, get_country_flag_image_ba
 # Import country-specific backends
 from .europe.france import (
     BODACCBackend,
-    CCIBackend,
     EntDataGouvBackend,
-    EspaceDocsBackend,
     FrenchBaseBackend,
     InfogreffeBackend,
     INPIBackend,
@@ -26,9 +24,6 @@ from .europe.france import (
     PappersBackend,
     PharowBackend,
     SocieteComBackend,
-    SocieteDataBackend,
-    SocieteInfoBackend,
-    VerifBackend,
 )
 
 # Import helpers
@@ -39,6 +34,7 @@ from .helpers import (
     get_backends_by_continent,
     get_backends_by_country,
     get_backends_sorted,
+    search_companies,
 )
 
 __all__ = [
@@ -54,16 +50,12 @@ __all__ = [
     "OpendatasoftBackend",
     "INPIBackend",
     "SocieteComBackend",
-    "VerifBackend",
-    "SocieteInfoBackend",
-    "CCIBackend",
-    "SocieteDataBackend",
     "PharowBackend",
-    "EspaceDocsBackend",
     "get_all_backend_classes",
     "get_all_backends",
     "get_backends",
     "get_backends_sorted",
     "get_backends_by_continent",
     "get_backends_by_country",
+    "search_companies",
 ]

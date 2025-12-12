@@ -33,17 +33,24 @@ class OpendatasoftBackend(FrenchBaseBackend):
     can_fetch_events = False
     can_fetch_company_data = True
 
+    request_cost = {
+        "data": "free",
+        "documents": "free",
+        "events": "free",
+    }
+
     documentation_url = "https://help.opendatasoft.com/apis/ods-search-api"
     site_url = "https://data.opendatasoft.com"
     status_url = None
     api_url = "https://data.opendatasoft.com/api/explore/v2.1"
+    default_dataset_id = "economicref-france-sirene-v3@public"
 
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize Opendatasoft backend."""
         super().__init__(config)
-        self.api_key = self.config.get("api_key")
-        self.dataset_id = self.config.get("dataset_id")
-        self.base_url = self.config.get("base_url", self.api_url)
+        self.api_key = self._get_config_or_env("api_key")
+        self.dataset_id = self._get_config_or_env("dataset_id", default=self.default_dataset_id)
+        self.base_url = self._get_config_or_env("base_url", default=self.api_url)
 
     def search_by_name(self, name: str, **kwargs) -> list[dict[str, Any]]:
         """Search for companies by name on Opendatasoft."""

@@ -17,10 +17,26 @@ class FrenchBaseBackend(BaseBackend):
     - SIREN validation and formatting
     - RNA validation and formatting
     - Common search patterns
+    - Standardized field mapping
     """
 
     continent = "europe"
     country_code = "FR"
+
+    standard_fields = [
+        "siren",
+        "rna",
+        "siret",
+        "denomination",
+        "since",
+        "legalform",
+        "ape",
+        "category",
+        "slice_effective",
+        "siege",
+    ]
+
+    fields_association: dict[str, str | tuple[str, ...]] = {}
 
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize French backend."""
@@ -108,3 +124,50 @@ class FrenchBaseBackend(BaseBackend):
     ) -> list[dict[str, Any]]:
         """Get official documents/publications for a company/entity."""
         raise NotImplementedError("Subclasses must implement get_documents")
+
+    def _getattr_recursive(self, obj: dict[str, Any], path: str, default: Any = None) -> Any:
+        """Extract value from nested dictionary using dot notation."""
+        keys = path.split(".")
+        current = obj
+        for key in keys:
+            if isinstance(current, dict):
+                current = current.get(key)
+            elif hasattr(current, key):
+                current = getattr(current, key)
+            else:
+                return default
+            if current is None:
+                return default
+        return current
+
+    def _get_value(self, obj: dict[str, Any], field: str, default: Any = None) -> Any:
+        """Get value for a standard field from raw data object."""
+        mapping = self.fields_association.get(field)
+        if not mapping:
+            return self._getattr_recursive(obj, field, default)
+
+        if isinstance(mapping, tuple):
+            for path in mapping:
+                value = self._getattr_recursive(obj, path)
+                if value is not None:
+                    return value
+            return default
+
+        return self._getattr_recursive(obj, mapping, default)
+
+    def _normalize_result(self, raw_data: dict[str, Any]) -> dict[str, Any]:
+        """Normalize a single result to standard fields."""
+        normalized = {}
+        for field in self.standard_fields:
+            normalized[field] = self._get_value(raw_data, field)
+        return normalized
+
+    def normalize_results(
+        self, results: list[dict[str, Any]] | dict[str, Any] | None
+    ) -> list[dict[str, Any]]:
+        """Normalize results to standard fields."""
+        if results is None:
+            return []
+        if isinstance(results, dict):
+            return [self._normalize_result(results)]
+        return [self._normalize_result(result) for result in results]

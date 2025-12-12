@@ -31,6 +31,12 @@ class SocieteComBackend(FrenchBaseBackend):
     can_fetch_events = False
     can_fetch_company_data = True
 
+    request_cost = {
+        "data": 5.0,
+        "documents": 5.0,
+        "events": "free",
+    }
+
     documentation_url = "https://www.societe.com/cgi-bin/api"
     site_url = "https://www.societe.com"
     status_url = None
@@ -39,9 +45,9 @@ class SocieteComBackend(FrenchBaseBackend):
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize Societe.com backend."""
         super().__init__(config)
-        self.api_key = self.config.get("api_key")
-        self.api_secret = self.config.get("api_secret")
-        self.base_url = self.config.get("base_url", self.api_url)
+        self.api_key = self._get_config_or_env("api_key")
+        self.api_secret = self._get_config_or_env("api_secret")
+        self.base_url = self._get_config_or_env("base_url", default=self.api_url)
 
     def search_by_code(
         self, code: str, code_type: str | None = None, **kwargs
