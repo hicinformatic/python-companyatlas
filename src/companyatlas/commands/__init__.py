@@ -1,0 +1,2 @@
+"""Commands for companyatlas CLI."""
+
