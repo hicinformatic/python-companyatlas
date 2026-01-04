@@ -21,6 +21,33 @@ class InseeProvider(CompanyAtlasFranceProvider):
     status_url = "https://api.insee.fr/status"
     provider_can_be_used = True
 
+    fields_associations = {
+        "siren": "uniteLegale.siren",
+        "rna": "uniteLegale.identifiantAssociationUniteLegale",
+        "siret": "siret",
+        "denomination": ("uniteLegale.denominationUniteLegale", "uniteLegale.denominationUsuelleUniteLegale"),
+        "since": "uniteLegale.dateCreationUniteLegale",
+        "legalform": "uniteLegale.categorieJuridiqueUniteLegale",
+        "ape": ("uniteLegale.activitePrincipaleUniteLegale", "activitePrincipaleEtablissement"),
+        "category": "uniteLegale.trancheEffectifsUniteLegale",
+        "slice_effective": "uniteLegale.trancheEffectifsUniteLegale",
+        "is_headquarter": "etablissementSiege",
+        "address_line1": "adresseEtablissement.numeroVoieEtablissement",
+        "address_line2": "adresseEtablissement.complementAdresseEtablissement",
+        "address_line3": None,
+        "city": "adresseEtablissement.libelleCommuneEtablissement",
+        "postal_code": "adresseEtablissement.codePostalEtablissement",
+        "state": "adresseEtablissement.libelleDepartement",
+        "region": "adresseEtablissement.libelleRegion",
+        "county": "adresseEtablissement.libelleCommuneEtablissement",
+        "country": "adresseEtablissement.libellePaysEtrangerEtablissement",
+        "country_code": "adresseEtablissement.codePaysEtrangerEtablissement",
+        "municipality": "adresseEtablissement.libelleCommuneEtablissement",
+        "neighbourhood": None,
+        "latitude": "adresseEtablissement.latitude",
+        "longitude": "adresseEtablissement.longitude",
+    }
+
     def _detect_code_type(self, code: str) -> str | None:
         code_clean = re.sub(r"[\s-]", "", code)
         if re.match(r"^\d{9}$", code_clean):
@@ -48,14 +75,21 @@ class InseeProvider(CompanyAtlasFranceProvider):
         except Exception:
             return []
 
-    def search_company(self, query: str) -> list[dict[str, Any]]:
+    def search_company(self, query: str, raw: bool = False, **kwargs: Any) -> list[dict[str, Any]]:
         """Search for a company by name."""
         if not query:
             return []
         query_str = f'denominationUniteLegale:"{query}"+AND+etatAdministratifUniteLegale:A+AND+etablissementSiege:true'
-        return self._call_api(query_str)
+        results = self._call_api(query_str)
+        if raw:
+            return results
+        normalized = []
+        for result in results:
+            normalized_result = self.normalize(self.france_fields, result)
+            normalized.append(normalized_result)
+        return normalized
 
-    def search_company_by_code(self, code: str) -> dict[str, Any] | None:
+    def search_company_by_code(self, code: str, raw: bool = False, **kwargs: Any) -> dict[str, Any] | None:
         """Search for a company by SIREN, SIRET, or RNA."""
         if not code:
             return None
@@ -71,4 +105,9 @@ class InseeProvider(CompanyAtlasFranceProvider):
             rna_clean = re.sub(r"[\s-]", "", code.upper())
             query_str = f"identifiantAssociationUniteLegale:{rna_clean}+AND+etablissementSiege:true+AND+etatAdministratifUniteLegale:A"
         results = self._call_api(query_str)
-        return results[0] if results else None
+        result = results[0] if results else None
+        if result is None:
+            return None
+        if raw:
+            return result
+        return self.normalize(self.france_fields, result)

@@ -20,6 +20,33 @@ class InfogreffeProvider(CompanyAtlasFranceProvider):
     status_url = None
     provider_can_be_used = True
 
+    fields_associations = {
+        "siren": "siren",
+        "rna": None,
+        "siret": "siret",
+        "denomination": "denomination",
+        "since": "date_creation",
+        "legalform": "forme_juridique",
+        "ape": "activite_principale",
+        "category": None,
+        "slice_effective": None,
+        "is_headquarter": "est_siege",
+        "address_line1": "adresse.ligne1",
+        "address_line2": "adresse.ligne2",
+        "address_line3": "adresse.ligne3",
+        "city": "adresse.ville",
+        "postal_code": "adresse.code_postal",
+        "state": "adresse.departement",
+        "region": "adresse.region",
+        "county": "adresse.ville",
+        "country": "adresse.pays",
+        "country_code": "adresse.code_pays",
+        "municipality": "adresse.ville",
+        "neighbourhood": None,
+        "latitude": "adresse.latitude",
+        "longitude": "adresse.longitude",
+    }
+
     def _validate_siren(self, siren: str) -> bool:
         siren_clean = re.sub(r"[\s-]", "", siren)
         return bool(re.match(r"^\d{9}$", siren_clean))
@@ -28,11 +55,11 @@ class InfogreffeProvider(CompanyAtlasFranceProvider):
         siren_clean = re.sub(r"[\s-]", "", siren)
         return siren_clean[:9] if len(siren_clean) >= 9 else siren_clean
 
-    def search_company(self, query: str) -> list[dict[str, Any]]:
+    def search_company(self, query: str, raw: bool = False, **kwargs: Any) -> list[dict[str, Any]]:
         """Search for a company by name."""
         return []
 
-    def search_company_by_code(self, code: str) -> dict[str, Any] | None:
+    def search_company_by_code(self, code: str, raw: bool = False, **kwargs: Any) -> dict[str, Any] | None:
         """Search for a company by SIREN or RCS."""
         if not code:
             return None

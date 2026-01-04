@@ -115,7 +115,7 @@ def search_company_by_code(
         return try_providers_first(**providers_args)
     return try_providers(**providers_args)
 
-def download_company_documents(
+def get_company_documents(
     code: str,
     first: bool = False,
     providers: dict[str, Any] | None = None,
@@ -133,7 +133,7 @@ def download_company_documents(
         kwargs["additional_args"] = {}
     kwargs["additional_args"]["code"] = code
     providers_args = {
-        "command": "download_company_documents",
+        "command": "get_company_documents",
         "json": json,
         "lib_name": lib_name,
         "config": config,
