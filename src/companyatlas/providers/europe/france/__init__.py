@@ -1,3 +1,5 @@
+import re
+
 from .. import CompanyAtlasEuropeProvider
 
 FRANCE_FIELDS_DESCRIPTIONS = {
@@ -33,3 +35,19 @@ class CompanyAtlasFranceProvider(CompanyAtlasEuropeProvider):
     geo_country_name = "France"
     provider_can_be_used = False
     france_fields = list(FRANCE_FIELDS_DESCRIPTIONS.keys())
+
+    @staticmethod
+    def is_siren(query: str) -> bool:
+        """Check if query is a SIREN number (9 digits)."""
+        if not query:
+            return False
+        siren_clean = re.sub(r"[\s-]", "", query)
+        return bool(re.match(r"^\d{9}$", siren_clean))
+
+    @staticmethod
+    def is_rna(query: str) -> bool:
+        """Check if query is an RNA number (W + 8 digits)."""
+        if not query:
+            return False
+        rna_clean = re.sub(r"[\s-]", "", query.upper())
+        return bool(re.match(r"^W\d{8}$", rna_clean))

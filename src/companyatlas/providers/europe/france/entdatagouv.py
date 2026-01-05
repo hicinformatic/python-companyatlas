@@ -33,19 +33,19 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
         "category": "categorie_entreprise",
         "slice_effective": "tranche_effectif_salarie",
         "is_headquarter": "est_siege",
-        "address_line2": "siege.complement_adresse",
-        "address_line3": "siege.complement_adresse2",
-        "city": "siege.libelle_commune",
-        "postal_code": "siege.code_postal",
-        "state": "siege.departement",
-        "region": "siege.region",
-        "county": "siege.commune",
-        "country": "siege.pays",
-        "country_code": "siege.code_pays",
-        "municipality": "siege.commune",
-        "neighbourhood": "siege.commune",
-        "latitude": "siege.latitude",
-        "longitude": "siege.longitude",
+        "address_line2": ["siege.complement_adresse", "matching_etablissements.0.complement_adresse"],
+        "address_line3": ["siege.complement_adresse2", "matching_etablissements.0.complement_adresse2"],
+        "city": ["siege.libelle_commune", "matching_etablissements.0.libelle_commune"],
+        "postal_code": ["siege.code_postal", "matching_etablissements.0.code_postal"],
+        "state": ["siege.departement", "matching_etablissements.0.departement"],
+        "region": ["siege.region", "matching_etablissements.0.region"],
+        "county": ["siege.commune", "matching_etablissements.0.commune"],
+        "country": ["siege.pays", "matching_etablissements.0.pays"],
+        "country_code": ["siege.code_pays", "matching_etablissements.0.code_pays"],
+        "municipality": ["siege.commune", "matching_etablissements.0.commune"],
+        "neighbourhood": ["siege.commune", "matching_etablissements.0.commune"],
+        "latitude": ["siege.latitude", "matching_etablissements.0.latitude"],
+        "longitude": ["siege.longitude", "matching_etablissements.0.longitude"],
     }
 
     def _detect_code_type(self, code: str) -> str | None:
@@ -70,9 +70,9 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
             return None
 
     def get_normalize_address_line1(self, data: dict[str, Any]) -> str | None:
-        nv = self._get_nested_value(data, "siege.numero_voie")
-        tv = self._get_nested_value(data, "siege.type_voie")
-        lv = self._get_nested_value(data, "siege.libelle_voie")
+        nv = self._get_nested_value(data, ["siege.numero_voie", "matching_etablissements.0.numero_voie"])
+        tv = self._get_nested_value(data, ["siege.type_voie", "matching_etablissements.0.type_voie"])
+        lv = self._get_nested_value(data, ["siege.libelle_voie", "matching_etablissements.0.libelle_voie"])
         return f"{nv} {tv} {lv}"
 
     def search_company(self, query: str, raw: bool = False, **kwargs: Any) -> list[dict[str, Any]]:

@@ -9,42 +9,47 @@ except ImportError:
 from . import CompanyAtlasFranceProvider
 
 
-class OpendatasoftProvider(CompanyAtlasFranceProvider):
-    name = "opendatasoft"
-    display_name = "Opendatasoft"
+class HuwiseProvider(CompanyAtlasFranceProvider):
+    name = "huwise"
+    display_name = "Huwise"
     description = "Open data platform aggregating French public datasets"
     required_packages = ["requests"]
-    config_keys = ["OPENDATASOFT_API_KEY", "OPENDATASOFT_DATASET_ID"]
-    documentation_url = "https://help.opendatasoft.com/apis/ods-search-api"
-    site_url = "https://data.opendatasoft.com"
+    config_keys = ["SIREN_DATASET_ID", "BASE_URL"]
+    config_defaults = {
+        "SIREN_DATASET_ID": "economicref-france-sirene-v3",
+        "BASE_URL": "https://hub.huwise.com",
+    }
+    config_required = []
+    documentation_url = "https://docs.huwise.com"
+    site_url = "https://huwise.com"
     status_url = None
     provider_can_be_used = True
 
     fields_associations = {
-        "siren": "record.fields.siren",
-        "rna": "record.fields.rna",
-        "siret": "record.fields.siret",
-        "denomination": ("record.fields.nom_complet", "record.fields.nom_raison_sociale"),
-        "since": "record.fields.date_creation",
-        "legalform": "record.fields.nature_juridique",
-        "ape": "record.fields.activite_principale",
-        "category": "record.fields.categorie_entreprise",
-        "slice_effective": "record.fields.tranche_effectif_salarie",
-        "is_headquarter": "record.fields.est_siege",
-        "address_line1": "record.fields.adresse",
-        "address_line2": "record.fields.complement_adresse",
-        "address_line3": None,
-        "city": "record.fields.libelle_commune",
-        "postal_code": "record.fields.code_postal",
-        "state": "record.fields.departement",
-        "region": "record.fields.region",
-        "county": "record.fields.libelle_commune",
-        "country": "record.fields.libelle_pays_etranger",
-        "country_code": "record.fields.code_pays_etranger",
-        "municipality": "record.fields.libelle_commune",
+        "siren": "siren",
+        "rna": "identifiantassociationunitelegale",
+        "siret": "siret",
+        "denomination": ("denominationunitelegale", "denominationusuelleetablissement"),
+        "since": "datecreationunitelegale",
+        "legalform": "naturejuridiqueunitelegale",
+        "ape": ("activiteprincipaleunitelegale", "activiteprincipaleetablissement"),
+        "category": "categorieentreprise",
+        "slice_effective": "trancheeffectifsunitelegale",
+        "is_headquarter": "etablissementsiege",
+        "address_line1": "adresseetablissement",
+        "address_line2": "complementadresseetablissement",
+        "address_line3": "complementadresse2etablissement",
+        "city": "libellecommuneetablissement",
+        "postal_code": "codepostaletablissement",
+        "state": "departementetablissement",
+        "region": "regionetablissement",
+        "county": "libellecommuneetablissement",
+        "country": "libellepaysetrangeretablissement",
+        "country_code": "codepaysetrangeretablissement",
+        "municipality": "libellecommuneetablissement",
         "neighbourhood": None,
-        "latitude": "record.fields.latitude",
-        "longitude": "record.fields.longitude",
+        "latitude": "geolocetablissement.lat",
+        "longitude": "geolocetablissement.lon",
     }
 
     def _validate_siren(self, siren: str) -> bool:
@@ -58,13 +63,11 @@ class OpendatasoftProvider(CompanyAtlasFranceProvider):
     def _call_api(self, query: str) -> list[dict[str, Any]]:
         if requests is None:
             return []
-        dataset_id = self._get_config_or_env("OPENDATASOFT_DATASET_ID", default="economicref-france-sirene-v3@public")
-        api_key = self._get_config_or_env("OPENDATASOFT_API_KEY")
-        url = f"https://data.opendatasoft.com/api/explore/v2.1/catalog/datasets/{dataset_id}/records"
-        params = {"q": query, "limit": 20}
+        dataset_id = self._get_config_or_env("SIREN_DATASET_ID", default="economicref-france-sirene-v3")
+        base_url = self._get_config_or_env("BASE_URL", default="https://hub.huwise.com")
+        url = f"{base_url}/api/explore/v2.1/catalog/datasets/{dataset_id}/records/"
+        params = {"where": f"search({query})", "limit": 20, "lang": "fr", "offset": 0, "timezone": "Europe/Paris"}
         headers = {}
-        if api_key:
-            headers["apikey"] = api_key
         try:
             response = requests.get(url, params=params, headers=headers, timeout=10)
             response.raise_for_status()
@@ -77,7 +80,7 @@ class OpendatasoftProvider(CompanyAtlasFranceProvider):
         """Search for a company by name."""
         if not query:
             return []
-        query_str = f'nom_complet:"{query}"'
+        query_str = f'"{query}"'
         results = self._call_api(query_str)
         if raw:
             return results
@@ -94,7 +97,7 @@ class OpendatasoftProvider(CompanyAtlasFranceProvider):
         siren = self._format_siren(code)
         if not self._validate_siren(siren):
             return None
-        query_str = f"siren:{siren}"
+        query_str = f'"{siren}"'
         results = self._call_api(query_str)
         result = results[0] if results else None
         if result is None:
