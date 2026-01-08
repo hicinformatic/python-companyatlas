@@ -1,38 +1,27 @@
 ## Project Structure
 
-Geoaddress follows a standard Python package structure with a provider-based architecture using ProviderKit for provider management.
+CompanyAtlas follows a standard Python package structure with a provider-based architecture using ProviderKit for provider management.
 
 ### General Structure
 
 ```
-python-geoaddress/
+python-companyatlas/
 ├── src/
-│   └── geoaddress/           # Main package directory
-│       ├── __init__.py       # Package exports and field descriptions
-│       ├── providers/        # Address provider implementations
-│       │   ├── __init__.py   # GeoaddressProvider base class
-│       │   ├── nominatim.py  # Nominatim provider (OpenStreetMap)
-│       │   ├── photon.py     # Photon provider (Komoot/OSM)
-│       │   ├── google_maps.py # Google Maps provider
-│       │   ├── mapbox.py     # Mapbox provider
-│       │   ├── locationiq.py # LocationIQ provider
-│       │   ├── opencage.py   # OpenCage provider
-│       │   ├── geocode_earth.py # Geocode Earth provider
-│       │   ├── geoapify.py   # Geoapify provider
-│       │   ├── maps_co.py    # Maps.co provider
-│       │   ├── here.py       # HERE provider
-│       │   └── google.py     # Google provider
-│       ├── commands/         # Command infrastructure
-│       │   └── address.py    # Address command
-│       ├── helpers.py        # Helper functions (get_address_providers, search_addresses, etc.)
-│       ├── cli.py            # CLI interface
-│       └── __main__.py       # Entry point for package execution
-├── tests/                    # Test suite
+│   └── companyatlas/          # Main package directory
+│       ├── __init__.py        # Package exports
+│       ├── providers/         # Company data provider implementations
+│       │   ├── __init__.py    # CompanyAtlasProvider base class
+│       │   └── ...            # Provider implementations
+│       ├── commands/           # Command infrastructure
+│       ├── helpers.py          # Helper functions (get_company_providers, search_companies, etc.)
+│       ├── cli.py              # CLI interface
+│       └── __main__.py         # Entry point for package execution
+├── tests/                     # Test suite
 │   └── ...
-├── docs/                     # Documentation
+├── docs/                      # Documentation
 │   └── ...
-├── service.py                # Main service entry point script
-├── pyproject.toml            # Project configuration
+├── service.py                 # Main service entry point script
+├── pyproject.toml             # Project configuration
 └── ...
 ```
 
@@ -46,47 +35,27 @@ python-geoaddress/
 
 ### Provider Organization
 
-The `providers/` directory contains address provider implementations:
+The `providers/` directory contains company data provider implementations:
 
-- **`__init__.py`**: Defines `GeoaddressProvider` base class that extends `ProviderBase` from ProviderKit
-- Each provider file (e.g., `nominatim.py`, `google_maps.py`) implements a specific geocoding service
-- All providers inherit from `GeoaddressProvider` which provides common functionality
-- Providers implement services: `search_addresses`, `get_address_by_reference`, `reverse_geocode`, `get_address_by_osm`
-
-### Available Providers
-
-- **Free providers** (no API key required):
-  - Nominatim (OpenStreetMap)
-  - Photon (Komoot/OSM)
-
-- **Paid/API key providers**:
-  - Google Maps
-  - Mapbox
-  - LocationIQ
-  - OpenCage
-  - Geocode Earth
-  - Geoapify
-  - Maps.co
-  - HERE
+- **`__init__.py`**: Defines `CompanyAtlasProvider` base class that extends `ProviderBase` from ProviderKit
+- Each provider file implements a specific company data service
+- All providers inherit from `CompanyAtlasProvider` which provides common functionality
 
 ### Helper Functions
 
 The `helpers.py` module provides:
-- `get_address_providers()`: Get address providers from various sources
-- `search_addresses()`: Search addresses using providers
-- `get_address_by_reference()`: Get address by reference ID
-- `reverse_geocode()`: Reverse geocoding (coordinates → address)
-- `get_address_by_osm()`: Get address by OpenStreetMap ID
+- `get_company_providers()`: Get company providers from various sources
+- `search_companies()`: Search companies using providers
+- `get_company_by_reference()`: Get company by reference ID
 
 ### Package Exports
 
-The public API is defined in `src/geoaddress/__init__.py`:
-- `GEOADDRESS_FIELDS_DESCRIPTIONS`: Dictionary describing address field meanings
+The public API is defined in `src/companyatlas/__init__.py`:
+- Provider base class and helper functions
 
 ### ProviderKit Integration
 
-Geoaddress uses ProviderKit for provider management:
-- Providers inherit from `ProviderBase` via `GeoaddressProvider`
+CompanyAtlas uses ProviderKit for provider management:
+- Providers inherit from `ProviderBase` via `CompanyAtlasProvider`
 - Uses ProviderKit's helper functions for provider discovery and management
 - Providers can be loaded from JSON, configuration, or directory scanning
-
