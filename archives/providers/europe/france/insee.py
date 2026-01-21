@@ -26,7 +26,10 @@ class INSEEBackend(FrenchBaseBackend):
     display_name = "INSEE SIRENE"
     description_text = "Official French company registry (SIRENE database)"
 
-    config_keys = ["api_key"]
+    config_keys = ["API_KEY", "BASE_URL"]
+    config_defaults = {
+        "BASE_URL": "https://api.insee.fr",
+    }
     required_packages = ["requests"]
 
     can_fetch_documents = False
@@ -84,8 +87,8 @@ class INSEEBackend(FrenchBaseBackend):
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize INSEE backend."""
         super().__init__(config)
-        self.api_key = self._get_config_or_env("api_key")
-        self.base_url = self._get_config_or_env("base_url", default="https://api.insee.fr/")
+        self.api_key = self._get_config_or_env("API_KEY")
+        self.base_url = self._get_config_or_env("BASE_URL")
 
     def _get_search_type(self, query: str) -> str:
         """Detect search type from query string."""

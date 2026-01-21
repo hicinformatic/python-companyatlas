@@ -15,59 +15,25 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
     display_name = "data.gouv.fr"
     description = "French open data platform for public entities and datasets"
     required_packages = ["requests"]
-    config_keys = []
+    config_keys = ["BASE_URL"]
+    config_defaults = {
+        "BASE_URL": "https://recherche-entreprises.api.gouv.fr",
+    }
     documentation_url = "https://www.data.gouv.fr/api"
     site_url = "https://www.data.gouv.fr"
     status_url = None
-    provider_can_be_used = True
+    priority = 2
 
     fields_associations = {
-        "siren": "siren",
-        "rna": "complements.identifiant_association",
-        "siret": "siege.siret",
-        "is_association": "complements.est_association",
-        "denomination": ("nom_complet", "nom_raison_sociale"),
-        "since": "date_creation",
-        "legalform": "nature_juridique",
-        "ape": ("activite_principale", "siege.activite_principale"),
-        "category": "categorie_entreprise",
-        "slice_effective": "tranche_effectif_salarie",
-        "is_headquarter": "est_siege",
-        "address_line2": ["siege.complement_adresse", "matching_etablissements.0.complement_adresse"],
-        "address_line3": ["siege.complement_adresse2", "matching_etablissements.0.complement_adresse2"],
-        "city": ["siege.libelle_commune", "matching_etablissements.0.libelle_commune"],
-        "postal_code": ["siege.code_postal", "matching_etablissements.0.code_postal"],
-        "state": ["siege.departement", "matching_etablissements.0.departement"],
-        "region": ["siege.region", "matching_etablissements.0.region"],
-        "county": ["siege.commune", "matching_etablissements.0.commune"],
-        "country": ["siege.pays", "matching_etablissements.0.pays"],
-        "country_code": ["siege.code_pays", "matching_etablissements.0.code_pays"],
-        "municipality": ["siege.commune", "matching_etablissements.0.commune"],
-        "neighbourhood": ["siege.commune", "matching_etablissements.0.commune"],
-        "latitude": ["siege.latitude", "matching_etablissements.0.latitude"],
-        "longitude": ["siege.longitude", "matching_etablissements.0.longitude"],
+        "reference": ("complements.identifiant_association", "siege.siret", "siege.siren", "siren"),
+        "denomination": ["nom_raison_sociale", "nom_complet"],
+
     }
 
-    def _detect_code_type(self, code: str) -> str | None:
-        code_clean = re.sub(r"[\s-]", "", code)
-        if re.match(r"^\d{9}$", code_clean):
-            return "siren"
-        if re.match(r"^\d{14}$", code_clean):
-            return "siret"
-        rna_clean = re.sub(r"[\s-]", "", code.upper())
-        if re.match(r"^W\d{8}$", rna_clean):
-            return "rna"
-        return None
-
     def _call_api(self, url: str) -> Any:
-        if requests is None:
-            return None
-        try:
-            response = requests.get(url, timeout=10)
-            response.raise_for_status()
-            return response.json()
-        except Exception:
-            return None
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.json()
 
     def get_normalize_address_line1(self, data: dict[str, Any]) -> str | None:
         nv = self._get_nested_value(data, ["siege.numero_voie", "matching_etablissements.0.numero_voie"])
@@ -79,47 +45,30 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
         """Search for a company by name."""
         if not query:
             return []
-        url = f"https://recherche-entreprises.api.gouv.fr/search?q={quote(query)}"
+        url = f"{self._get_config_or_env('BASE_URL')}/search?q={quote(query)}"
         data = self._call_api(url)
-        if data:
-            results = data.get("results", [])
-            if raw:
-                return results
-            normalized = []
-            for result in results:
-                normalized_result = self.normalize(self.france_fields, result)
-                normalized.append(normalized_result)
-            return normalized
-        return []
+        return data.get("results", [])
+        
+    def _get_url_by_reference(self, code: str) -> str:
+        """Get the URL to search for a company by reference."""
+        code_type = self._detect_code_type(code)
+        if not code_type:
+            return None
+        code_clean = re.sub(r"[\s-]", "", code)
+        if code_type == "siren":
+            return f"{self._get_config_or_env('BASE_URL')}/search?q={code_clean}"
+        elif code_type == "siret":
+            return f"{self._get_config_or_env('BASE_URL')}/search?q={code_clean}"
+        elif code_type == "rna":
+            return f"{self._get_config_or_env('BASE_URL')}/api/rna/v1/id/{code_clean}"
+        return None
 
     def search_company_by_reference(self, code: str, raw: bool = False, **kwargs: Any) -> dict[str, Any] | None:
         """Search for a company by SIREN, SIRET, or RNA."""
         if not code:
             return None
-        code_type = self._detect_code_type(code)
-        if not code_type:
-            return None
-        code_clean = re.sub(r"[\s-]", "", code)
-        result = None
-        if code_type == "siren":
-            url = f"https://recherche-entreprises.api.gouv.fr/search?q={code_clean}"
-            data = self._call_api(url)
-            if data:
-                results = data.get("results", [])
-                result = results[0] if results else None
-        elif code_type == "siret":
-            url = f"https://recherche-entreprises.api.gouv.fr/search?q={code_clean}"
-            data = self._call_api(url)
-            if data:
-                results = data.get("results", [])
-                result = results[0] if results else None
-        else:
-            rna_clean = re.sub(r"[\s-]", "", code.upper())
-            url = f"https://entreprise.data.gouv.fr/api/rna/v1/id/{rna_clean}"
-            result = self._call_api(url)
-        if result is None:
-            return None
-        if raw:
-            return result
-        return self.normalize(self.france_fields, result)
+        url = self._get_url_by_reference(code)
+        data = self._call_api(url)
+        return data.get("results", [])
+
 

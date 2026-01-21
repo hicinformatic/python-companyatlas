@@ -1,6 +1,6 @@
 from providerkit import ProviderBase
 
-from companyatlas import (
+from .. import (
     COMPANYATLAS_SEARCH_COMPANY_FIELDS,
     COMPANYATLAS_GET_COMPANY_DOCUMENTS_FIELDS,
     COMPANYATLAS_GET_COMPANY_EVENTS_FIELDS,
@@ -10,8 +10,11 @@ from companyatlas import (
 
 
 class CompanyAtlasProvider(ProviderBase):
+    geo_zone = "world"
+    geo_country = "world"
+    geo_code = "ww"
     config_prefix = "COMPANYATLAS"
-    services_cfg = {
+    _default_services_cfg = {
         "search_company": {
             "label": "Search company",
             "description": "Search company",
@@ -49,6 +52,12 @@ class CompanyAtlasProvider(ProviderBase):
             "fields": COMPANYATLAS_GET_ULTIMATE_BENEFICIAL_OWNERS_FIELDS,
         },
     }
+
+    def get_normalize_country(self, data: dict[str, Any]) -> str:
+        return f"{self.geo_zone}/{self.geo_country} ({self.geo_code})"
+
+    def get_normalize_data_source(self, data: dict[str, Any]) -> str:
+        return "test"
 
 
 __all__ = [CompanyAtlasProvider]

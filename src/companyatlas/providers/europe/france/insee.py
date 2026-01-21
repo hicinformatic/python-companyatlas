@@ -19,33 +19,11 @@ class InseeProvider(CompanyAtlasFranceProvider):
     documentation_url = "https://api.insee.fr/catalogue/site/themes/wso2/subthemes/insee/pages/list-apis.jag"
     site_url = "https://www.insee.fr"
     status_url = "https://api.insee.fr/status"
-    provider_can_be_used = True
+    priority = 4
 
     fields_associations = {
-        "siren": "siren",
-        "rna": "uniteLegale.identifiantAssociationUniteLegale",
-        "siret": "siret",
+        "reference": ("siren", "siret", "uniteLegale.identifiantAssociationUniteLegale"),
         "denomination": "uniteLegale.denominationUniteLegale",
-        "since": "uniteLegale.dateCreationUniteLegale",
-        "legalform": "uniteLegale.categorieJuridiqueUniteLegale",
-        "ape": ("uniteLegale.activitePrincipaleUniteLegale", "activitePrincipaleNAF25Etablissement", "periodesEtablissement.0.activitePrincipaleEtablissement"),
-        "category": "uniteLegale.categorieEntreprise",
-        "slice_effective": ("uniteLegale.trancheEffectifsUniteLegale", "trancheEffectifsEtablissement"),
-        "is_headquarter": "etablissementSiege",
-        "address_line1": None,
-        "address_line2": None,
-        "address_line3": None,
-        "city": "adresseEtablissement.libelleCommuneEtablissement",
-        "postal_code": "adresseEtablissement.codePostalEtablissement",
-        "state": "adresseEtablissement.codeCommuneEtablissement",
-        "region": None,
-        "county": "adresseEtablissement.libelleCommuneEtablissement",
-        "country": None,
-        "country_code": None,
-        "municipality": "adresseEtablissement.libelleCommuneEtablissement",
-        "neighbourhood": None,
-        "latitude": None,
-        "longitude": None,
     }
 
     def get_normalize_address_line1(self, data: dict[str, Any]) -> str | None:
@@ -90,17 +68,15 @@ class InseeProvider(CompanyAtlasFranceProvider):
         )
         url = f"https://api.insee.fr/api-sirene/3.11/{endpoint}?{query_string}"
         headers = {"Accept": "application/json", "X-INSEE-Api-Key-Integration": api_key}
-        try:
-            response = requests.get(url, headers=headers, timeout=10)
-            response.raise_for_status()
-            data = response.json()
-            if "etablissements" in data:
-                return data["etablissements"]
-            if "unitesLegales" in data:
-                return data["unitesLegales"]
-            return []
-        except Exception:
-            return []
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        if "etablissements" in data:
+            return data["etablissements"]
+        if "unitesLegales" in data:
+            return data["unitesLegales"]
+        return []
+
 
     def search_company(self, query: str, raw: bool = False, **kwargs: Any) -> list[dict[str, Any]]:
         """Search for a company by name."""
@@ -108,16 +84,10 @@ class InseeProvider(CompanyAtlasFranceProvider):
             return []
         query_clean = query.replace("+", " ").strip()
         query_str = f'denominationUniteLegale:"{query_clean}"'
-        results = self._call_api(query_str, endpoint="siret")
-        if raw:
-            return results
-        normalized = []
-        for result in results:
-            normalized_result = self.normalize(self.france_fields, result)
-            normalized.append(normalized_result)
-        return normalized
+        return self._call_api(query_str, endpoint="siret")
 
-    def search_company_by_code(self, code: str, raw: bool = False, **kwargs: Any) -> dict[str, Any] | None:
+
+    def search_company_by_reference(self, code: str, raw: bool = False, **kwargs: Any) -> dict[str, Any] | None:
         """Search for a company by SIREN, SIRET, or RNA."""
         if not code:
             return None
@@ -132,10 +102,4 @@ class InseeProvider(CompanyAtlasFranceProvider):
         else:
             rna_clean = re.sub(r"[\s-]", "", code.upper())
             query_str = f"identifiantAssociationUniteLegale:{rna_clean}+AND+etablissementSiege:true+AND+etatAdministratifUniteLegale:A"
-        results = self._call_api(query_str)
-        result = results[0] if results else None
-        if result is None:
-            return None
-        if raw:
-            return result
-        return self.normalize(self.france_fields, result)
+        return self._call_api(query_str)

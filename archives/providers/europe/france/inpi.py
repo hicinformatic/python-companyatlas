@@ -22,18 +22,11 @@ class INPIBackend(FrenchBaseBackend):
         "Institut National de la Propriété Industrielle - Registre national des entreprises"
     )
 
-    config_keys = ["api_key", "username", "password"]
-    required_packages = ["requests"]
-
-    can_fetch_documents = True
-    can_fetch_events = False
-    can_fetch_company_data = True
-
-    request_cost = {
-        "data": 5.0,
-        "documents": 5.0,
-        "events": "free",
+    config_keys = ["API_KEY", "API_USERNAME", "API_PASSWORD", "BASE_URL"]
+    config_defaults = {
+        "BASE_URL": "https://api.inpi.fr",
     }
+    required_packages = ["requests"]
 
     documentation_url = "https://www.inpi.fr/fr/services-et-outils/api"
     site_url = "https://www.inpi.fr"
@@ -43,10 +36,10 @@ class INPIBackend(FrenchBaseBackend):
     def __init__(self, config: dict[str, Any] | None = None):
         """Initialize INPI backend."""
         super().__init__(config)
-        self.api_key = self._get_config_or_env("api_key")
-        self.username = self._get_config_or_env("username")
-        self.password = self._get_config_or_env("password")
-        self.base_url = self._get_config_or_env("base_url", default=self.api_url)
+        self.api_key = self._get_config_or_env("API_KEY")
+        self.username = self._get_config_or_env("API_USERNAME")
+        self.password = self._get_config_or_env("API_PASSWORD")
+        self.base_url = self._get_config_or_env("BASE_URL")
 
     def search_by_code(
         self, code: str, code_type: str | None = None, **kwargs

@@ -5,8 +5,13 @@ __version__ = "0.1.0"
 
 COMPANYATLAS_SEARCH_COMPANY_FIELDS = {
     "denomination": {
-        "label": "Name",
-        "description": "Name",
+        "label": "Denomination",
+        "description": "Denomination",
+        "format": "str",
+    },
+    "reference": {
+        "label": "Reference",
+        "description": "Reference",
         "format": "str",
     },
     "country": {

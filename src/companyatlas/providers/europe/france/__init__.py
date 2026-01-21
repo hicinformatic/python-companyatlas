@@ -31,23 +31,62 @@ FRANCE_FIELDS_DESCRIPTIONS = {
 }
 
 class CompanyAtlasFranceProvider(CompanyAtlasEuropeProvider):
-    geo_country_code = "FR"
-    geo_country_name = "France"
+    geo_code = "FR"
+    geo_country = "france"
     abstract = True
     france_fields = list(FRANCE_FIELDS_DESCRIPTIONS.keys())
 
-    @staticmethod
-    def is_siren(query: str) -> bool:
+    def is_siret(self, query: str) -> bool:
+        """Check if query is a SIRET number (14 digits)."""
+        if not query:
+            return False
+        siret_clean = re.sub(r"[\s-]", "", query)
+        return bool(re.match(r"^\d{14}$", siret_clean))
+
+    def is_siren(self, query: str) -> bool:
         """Check if query is a SIREN number (9 digits)."""
         if not query:
             return False
         siren_clean = re.sub(r"[\s-]", "", query)
         return bool(re.match(r"^\d{9}$", siren_clean))
 
-    @staticmethod
-    def is_rna(query: str) -> bool:
+    def is_rna(self, query: str) -> bool:
         """Check if query is an RNA number (W + 8 digits)."""
         if not query:
             return False
         rna_clean = re.sub(r"[\s-]", "", query.upper())
         return bool(re.match(r"^W\d{8}$", rna_clean))
+
+    def _validate_siret(self, siret: str) -> bool:
+        siret_clean = re.sub(r"[\s-]", "", siret)
+        return bool(re.match(r"^\d{14}$", siret_clean))
+
+    def _format_siret(self, siret: str) -> str:
+        siret_clean = re.sub(r"[\s-]", "", siret)
+        return siret_clean[:14] if len(siret_clean) >= 14 else siret_clean
+
+    def _validate_siren(self, siren: str) -> bool:
+        siren_clean = re.sub(r"[\s-]", "", siren)
+        return bool(re.match(r"^\d{9}$", siren_clean))
+
+    def _format_siren(self, siren: str) -> str:
+        siren_clean = re.sub(r"[\s-]", "", siren)
+        return siren_clean[:9] if len(siren_clean) >= 9 else siren_clean
+
+    def _validate_rna(self, rna: str) -> bool:
+        rna_clean = re.sub(r"[\s-]", "", rna.upper())
+        return bool(re.match(r"^W\d{8}$", rna_clean))
+
+    def _format_rna(self, rna: str) -> str:
+        rna_clean = re.sub(r"[\s-]", "", rna.upper())
+        return rna_clean[:9] if len(rna_clean) >= 9 else rna_clean
+
+    def _detect_code_type(self, code: str) -> str | None:
+        """Detect the type of code (siren, siret, rna)."""
+        if self.is_siret(code):
+            return "siret"
+        if self.is_siren(code):
+            return "siren"
+        if self.is_rna(code):
+            return "rna"
+        return None
