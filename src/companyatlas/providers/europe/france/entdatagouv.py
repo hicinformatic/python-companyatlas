@@ -92,7 +92,7 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
             return normalized
         return []
 
-    def search_company_by_code(self, code: str, raw: bool = False, **kwargs: Any) -> dict[str, Any] | None:
+    def search_company_by_reference(self, code: str, raw: bool = False, **kwargs: Any) -> dict[str, Any] | None:
         """Search for a company by SIREN, SIRET, or RNA."""
         if not code:
             return None
