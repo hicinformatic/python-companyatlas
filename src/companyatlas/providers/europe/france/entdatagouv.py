@@ -26,8 +26,7 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
     }
 
     def _call_api(self, url: str) -> dict[str, Any]:
-        import requests  # type: ignore[import-untyped]  # noqa: TID252
-        response = requests.get(url, timeout=10)
+        response = requests.get(url, timeout=10)  # type: ignore[name-defined]
         response.raise_for_status()
         return cast('dict[str, Any]', response.json())
 

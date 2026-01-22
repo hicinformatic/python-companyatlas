@@ -47,7 +47,6 @@ class InseeProvider(CompanyAtlasFranceProvider):
         return None
 
     def _call_api(self, query: str, endpoint: str = "siret") -> list[dict[str, Any]]:
-        import requests  # type: ignore[import-untyped]  # noqa: TID252
         api_key = self._get_config_or_env("API_KEY")
         if not api_key:
             raise ValueError("INSEE API_KEY is required but not configured")
@@ -62,7 +61,7 @@ class InseeProvider(CompanyAtlasFranceProvider):
         )
         url = f"https://api.insee.fr/api-sirene/3.11/{endpoint}?{query_string}"
         headers = {"Accept": "application/json", "X-INSEE-Api-Key-Integration": api_key}
-        response = requests.get(url, headers=headers, timeout=10)
+        response = requests.get(url, headers=headers, timeout=10)  # type: ignore[name-defined]
         response.raise_for_status()
         data = response.json()
         if "etablissements" in data:

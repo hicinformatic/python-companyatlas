@@ -34,7 +34,6 @@ class InpiProvider(CompanyAtlasFranceProvider):
 
     def _get_token(self) -> str | None:
         """Get authentication token from INPI API."""
-        import requests  # type: ignore[import-untyped]  # noqa: TID252
         if self._token:
             return self._token
         username = self._get_config_or_env("API_USERNAME")
@@ -57,12 +56,11 @@ class InpiProvider(CompanyAtlasFranceProvider):
 
     def _call_api(self, url: str, params: dict[str, Any] | None = None) -> dict[str, Any] | list[dict[str, Any]] | None:
         """Make authenticated API call."""
-        import requests  # type: ignore[import-untyped]  # noqa: TID252
         token = self._get_token()
         if not token:
             return None
         headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
-        response = requests.get(url, headers=headers, params=params, timeout=10)
+        response = requests.get(url, headers=headers, params=params, timeout=10)  # type: ignore[name-defined]
         response.raise_for_status()
         return cast('dict[str, Any] | list[dict[str, Any]]', response.json())
 

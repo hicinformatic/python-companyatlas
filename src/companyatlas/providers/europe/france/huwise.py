@@ -24,13 +24,12 @@ class HuwiseProvider(CompanyAtlasFranceProvider):
     }
 
     def _call_api(self, query: str) -> dict[str, Any]:
-        import requests  # type: ignore[import-untyped]  # noqa: TID252
         dataset_id = self._get_config_or_env("SIREN_DATASET_ID", default="economicref-france-sirene-v3")
         base_url = self._get_config_or_env("BASE_URL", default="https://hub.huwise.com")
         url = f"{base_url}/api/explore/v2.1/catalog/datasets/{dataset_id}/records/"
         params = {"where": f"search({query})", "limit": 20, "lang": "fr", "offset": 0, "timezone": "Europe/Paris"}
         headers: dict[str, str] = {}
-        response = requests.get(url, params=params, headers=headers, timeout=10)
+        response = requests.get(url, params=params, headers=headers, timeout=10)  # type: ignore[name-defined]
         response.raise_for_status()
         return cast('dict[str, Any]', response.json())
 
