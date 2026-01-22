@@ -25,8 +25,10 @@ def _events_command(args: list[str]) -> bool:
     first = parsed.pop('first', False)
     pvs_events = get_company_events(code, first=first, **kwargs)
     for pv in pvs_events:
+        name = pv['provider'].name
+        time = pv['response_time']
         print_separator()
-        print_header(pv['provider'].name)
+        print_header(f"{name} - {time}s")
         print_separator()
         print(pv['provider'].response('get_company_events', raw, output_format))
     return True

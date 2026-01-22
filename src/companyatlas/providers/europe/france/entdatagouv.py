@@ -1,11 +1,6 @@
 import re
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote
-
-try:
-    import requests
-except ImportError:
-    requests = None
 
 from . import CompanyAtlasFranceProvider
 
@@ -30,10 +25,11 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
 
     }
 
-    def _call_api(self, url: str) -> Any:
+    def _call_api(self, url: str) -> dict[str, Any]:
+        import requests  # type: ignore[import-untyped]  # noqa: TID252
         response = requests.get(url, timeout=10)
         response.raise_for_status()
-        return response.json()
+        return cast('dict[str, Any]', response.json())
 
     def get_normalize_address_line1(self, data: dict[str, Any]) -> str | None:
         nv = self._get_nested_value(data, ["siege.numero_voie", "matching_etablissements.0.numero_voie"])
@@ -47,17 +43,16 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
             return []
         url = f"{self._get_config_or_env('BASE_URL')}/search?q={quote(query)}"
         data = self._call_api(url)
-        return data.get("results", [])
-        
-    def _get_url_by_reference(self, code: str) -> str:
+        results = data.get("results", [])
+        return cast('list[dict[str, Any]]', results)
+
+    def _get_url_by_reference(self, code: str) -> str | None:
         """Get the URL to search for a company by reference."""
         code_type = self._detect_code_type(code)
         if not code_type:
             return None
         code_clean = re.sub(r"[\s-]", "", code)
-        if code_type == "siren":
-            return f"{self._get_config_or_env('BASE_URL')}/search?q={code_clean}"
-        elif code_type == "siret":
+        if code_type == "siren" or code_type == "siret":
             return f"{self._get_config_or_env('BASE_URL')}/search?q={code_clean}"
         elif code_type == "rna":
             return f"{self._get_config_or_env('BASE_URL')}/api/rna/v1/id/{code_clean}"
@@ -68,7 +63,10 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
         if not code:
             return None
         url = self._get_url_by_reference(code)
+        if url is None:
+            return None
         data = self._call_api(url)
-        return data.get("results", [])
+        results = data.get("results", [])
+        return results[0] if results else None
 
 

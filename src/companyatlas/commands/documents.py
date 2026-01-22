@@ -25,8 +25,10 @@ def _documents_command(args: list[str]) -> bool:
     first = parsed.pop('first', False)
     pvs_documents = get_company_documents(code, first=first, **kwargs)
     for pv in pvs_documents:
+        name = pv['provider'].name
+        time = pv['response_time']
         print_separator()
-        print_header(pv['provider'].name)
+        print_header(f"{name} - {time}s")
         print_separator()
         print(pv['provider'].response('get_company_documents', raw, output_format))
     return True

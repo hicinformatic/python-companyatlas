@@ -1,11 +1,15 @@
+from __future__ import annotations
+
+from typing import Any
+
 from providerkit import ProviderBase
 
 from .. import (
-    COMPANYATLAS_SEARCH_COMPANY_FIELDS,
     COMPANYATLAS_GET_COMPANY_DOCUMENTS_FIELDS,
     COMPANYATLAS_GET_COMPANY_EVENTS_FIELDS,
     COMPANYATLAS_GET_COMPANY_OFFICERS_FIELDS,
     COMPANYATLAS_GET_ULTIMATE_BENEFICIAL_OWNERS_FIELDS,
+    COMPANYATLAS_SEARCH_COMPANY_FIELDS,
 )
 
 
@@ -53,11 +57,15 @@ class CompanyAtlasProvider(ProviderBase):
         },
     }
 
-    def get_normalize_country(self, data: dict[str, Any]) -> str:
+    @property
+    def geo_data(self) -> str:
         return f"{self.geo_zone}/{self.geo_country} ({self.geo_code})"
 
+    def get_normalize_country(self, data: dict[str, Any]) -> str:
+        return self.geo_data
+
     def get_normalize_data_source(self, data: dict[str, Any]) -> str:
-        return "test"
+        return str(data)
 
 
-__all__ = [CompanyAtlasProvider]
+__all__ = ['CompanyAtlasProvider']

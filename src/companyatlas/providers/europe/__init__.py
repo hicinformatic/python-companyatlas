@@ -1,4 +1,5 @@
-from .. import CompanyAtlasProvider 
+from .. import CompanyAtlasProvider
+
 
 class CompanyAtlasEuropeProvider(CompanyAtlasProvider):
     geo_zone = "europe"

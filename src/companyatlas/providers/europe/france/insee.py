@@ -1,11 +1,6 @@
 import re
-from typing import Any
+from typing import Any, cast
 from urllib.parse import quote, urlencode
-
-try:
-    import requests
-except ImportError:
-    requests = None
 
 from . import CompanyAtlasFranceProvider
 
@@ -52,8 +47,7 @@ class InseeProvider(CompanyAtlasFranceProvider):
         return None
 
     def _call_api(self, query: str, endpoint: str = "siret") -> list[dict[str, Any]]:
-        if requests is None:
-            raise ImportError("requests package is required for INSEE provider")
+        import requests  # type: ignore[import-untyped]  # noqa: TID252
         api_key = self._get_config_or_env("API_KEY")
         if not api_key:
             raise ValueError("INSEE API_KEY is required but not configured")
@@ -72,9 +66,9 @@ class InseeProvider(CompanyAtlasFranceProvider):
         response.raise_for_status()
         data = response.json()
         if "etablissements" in data:
-            return data["etablissements"]
+            return cast('list[dict[str, Any]]', data["etablissements"])
         if "unitesLegales" in data:
-            return data["unitesLegales"]
+            return cast('list[dict[str, Any]]', data["unitesLegales"])
         return []
 
 
@@ -102,4 +96,5 @@ class InseeProvider(CompanyAtlasFranceProvider):
         else:
             rna_clean = re.sub(r"[\s-]", "", code.upper())
             query_str = f"identifiantAssociationUniteLegale:{rna_clean}+AND+etablissementSiege:true+AND+etatAdministratifUniteLegale:A"
-        return self._call_api(query_str)
+        results = self._call_api(query_str)
+        return results[0] if results else None

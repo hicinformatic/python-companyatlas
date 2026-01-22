@@ -4,23 +4,29 @@ from providerkit.helpers import call_providers, get_providers
 
 from .providers import CompanyAtlasProvider
 
+ADD_FIELDS = {
+    "geo_data": {
+        "label": "Data source",
+        "description": "Data source",
+        "format": "str",
+    },
+}
 
 def get_companyatlas_providers(*args: Any, **kwargs: Any) -> dict[str, Any] | str:
     """Get companyatlas providers."""
     lib_name = kwargs.pop('lib_name', 'companyatlas')
-    return cast('dict[str, Any] | str', get_providers(*args, lib_name=lib_name, **kwargs))
+    return cast('dict[str, Any] | str', get_providers(*args, lib_name=lib_name, add_fields=ADD_FIELDS, **kwargs))
 
 
 def get_companyatlas_provider(attribute_search: dict[str, Any], *args: Any, **kwargs: Any) -> CompanyAtlasProvider:
     """Get companyatlas provider by attribute search."""
     lib_name = kwargs.pop('lib_name', 'companyatlas')
-    providers = get_providers(*args, attribute_search=attribute_search, format="python", lib_name=lib_name, **kwargs)
+    providers = get_providers(*args, attribute_search=attribute_search, format="python", lib_name=lib_name, add_fields=ADD_FIELDS, **kwargs)
     if not providers:
         raise ValueError("No providers found")
     if len(providers) > 1:
         raise ValueError(f"Expected 1 provider, got {len(providers)}")
     return cast('CompanyAtlasProvider', providers[0])
-    
 
 def search_company(query: str, *args: Any, **kwargs: Any) -> Any:
     """Search company using providers."""
@@ -86,3 +92,4 @@ def get_ultimate_beneficial_owners(code: str, *args: Any, **kwargs: Any) -> Any:
         code=code,
         **kwargs,
     )
+

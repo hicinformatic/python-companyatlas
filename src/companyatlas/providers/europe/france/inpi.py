@@ -1,10 +1,4 @@
-import re
-from typing import Any
-
-try:
-    import requests
-except ImportError:
-    requests = None
+from typing import Any, cast
 
 from . import CompanyAtlasFranceProvider
 
@@ -40,16 +34,15 @@ class InpiProvider(CompanyAtlasFranceProvider):
 
     def _get_token(self) -> str | None:
         """Get authentication token from INPI API."""
+        import requests  # type: ignore[import-untyped]  # noqa: TID252
         if self._token:
             return self._token
-        if requests is None:
-            return None
         username = self._get_config_or_env("API_USERNAME")
         password = self._get_config_or_env("API_PASSWORD")
         if not username or not password:
             return None
         try:
-            response = requests.post(
+            response = requests.post(  # type: ignore[name-defined]
                 self._get_config_or_env("SSO_URL"),
                 json={"username": username, "password": password},
                 headers={"Content-Type": "application/json"},
@@ -64,15 +57,14 @@ class InpiProvider(CompanyAtlasFranceProvider):
 
     def _call_api(self, url: str, params: dict[str, Any] | None = None) -> dict[str, Any] | list[dict[str, Any]] | None:
         """Make authenticated API call."""
-        if requests is None:
-            return None
+        import requests  # type: ignore[import-untyped]  # noqa: TID252
         token = self._get_token()
         if not token:
             return None
         headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
         response = requests.get(url, headers=headers, params=params, timeout=10)
         response.raise_for_status()
-        return response.json()
+        return cast('dict[str, Any] | list[dict[str, Any]]', response.json())
 
 
     def search_company(self, query: str, raw: bool = False, **kwargs: Any) -> list[dict[str, Any]]:
@@ -101,6 +93,7 @@ class InpiProvider(CompanyAtlasFranceProvider):
         if not result or not isinstance(result, dict):
             return None
         if raw:
-            return result
-        return self.normalize(self.france_fields, result)
+            return cast('dict[str, Any]', result)
+        normalized = self.normalize(self.france_fields, result)
+        return cast('dict[str, Any]', normalized) if normalized else None
 

@@ -25,8 +25,10 @@ def _search_command(args: list[str]) -> bool:
     first = parsed.pop('first', False)
     pvs_companies = search_company(query, first=first, **kwargs)
     for pv in pvs_companies:
+        name = pv['provider'].name
+        time = pv['response_time']
         print_separator()
-        print_header(pv['provider'].name)
+        print_header(f"{name} - {time}s")
         print_separator()
         print(pv['provider'].response('search_company', raw, output_format))
     return True
