@@ -22,6 +22,16 @@ class InpiProvider(CompanyAtlasFranceProvider):
         super().__init__(**kwargs)
         self._token: str | None = None
 
+    # Address prefixes to search in order of priority
+    _address_prefixes = (
+        "formality.content.personneMorale.adresseEntreprise.adresse",
+        "formality.content.personneMorale.etablissementPrincipal.adresse",
+        "formality.content.personnePhysique.etablissementPrincipal.adresse",
+        "formality.content.personnePhysique.adresseEntreprise.adresse",
+    )
+
+
+
     fields_associations = {
         "reference": (
             "formality.content.personneMorale.etablissementPrincipal.descriptionEtablissement.siret",
@@ -34,10 +44,6 @@ class InpiProvider(CompanyAtlasFranceProvider):
             "formality.content.personneMorale.identite.entreprise.denomination",
             "formality.content.personnePhysique.etablissementPrincipal.descriptionEtablissement.nomCommercial",
             "formality.content.personnePhysique.identite.entreprise.denomination",
-        ),
-        "address": (
-            "formality.content.personneMorale.etablissementPrincipal.adresse",
-            "formality.content.personnePhysique.etablissementPrincipal.adresse",
         ),
     }
 
@@ -105,27 +111,40 @@ class InpiProvider(CompanyAtlasFranceProvider):
         return cast('dict[str, Any]', normalized) if normalized else None
 
     def get_normalize_address(self, data: dict[str, Any]) -> str | None:
-        fields = [
-            "formality.content.personneMorale.etablissementPrincipal.adresse.pays",
-            "formality.content.personnePhysique.etablissementPrincipal.adresse.pays",
-            "formality.content.personneMorale.etablissementPrincipal.adresse.codePays",
-            "formality.content.personnePhysique.etablissementPrincipal.adresse.codePays",
-            "formality.content.personneMorale.etablissementPrincipal.adresse.codePostal",
-            "formality.content.personnePhysique.etablissementPrincipal.adresse.codePostal",
-            "formality.content.personneMorale.etablissementPrincipal.adresse.commune",
-            "formality.content.personnePhysique.etablissementPrincipal.adresse.commune",
-            "formality.content.personneMorale.etablissementPrincipal.adresse.codeInseeCommune",
-            "formality.content.personnePhysique.etablissementPrincipal.adresse.codeInseeCommune",
-            "formality.content.personneMorale.etablissementPrincipal.adresse.typeVoie",
-            "formality.content.personnePhysique.etablissementPrincipal.adresse.typeVoie",
-            "formality.content.personneMorale.etablissementPrincipal.adresse.voie",
-            "formality.content.personnePhysique.etablissementPrincipal.adresse.voie",
-            "formality.content.personneMorale.etablissementPrincipal.adresse.numVoie",
-            "formality.content.personnePhysique.etablissementPrincipal.adresse.numVoie",
-        ]
+        """Build full address from multiple fields."""
+        for prefix in self._address_prefixes:
+            address_data = self._get_nested_value(data, prefix)
+            if address_data:
+                numVoie = address_data.get("numVoie")
+                typeVoie = address_data.get("typeVoie")
+                voie = address_data.get("voie")
+                complementLocalisation = address_data.get("complementLocalisation")
+                codePostal = address_data.get("codePostal")
+                commune = address_data.get("commune")
+                
+                address_line1, address_line2 = [], []
+                if numVoie:
+                    address_line1.append(str(numVoie))
+                if typeVoie:
+                    address_line1.append(typeVoie)
+                if voie:
+                    address_line1.append(voie)
+                if codePostal:
+                    address_line2.append(str(codePostal))
+                if commune:
+                    address_line2.append(commune)
+                ad1 = " ".join(address_line1) if address_line1 else None
+                ad2 = " ".join(address_line2) if address_line2 else None
+                return ", ".join([field for field in [ad1, complementLocalisation, ad2] if field])
+        return None
+
+    def get_normalize_description(self, data: dict[str, Any]) -> str | None:
+        """Build description from multiple fields."""
         parts = []
-        for field in fields:
-            value = self._get_nested_value(data, field)
-            if value:
-                parts.append(value)
-        return " ".join(parts) if parts else None
+        activite = self._get_nested_value(data, "formality.content.personneMorale.identite.entreprise.activitePrincipale") or self._get_nested_value(data, "formality.content.personnePhysique.identite.entreprise.activitePrincipale")
+        nature = self._get_nested_value(data, "formality.content.personneMorale.identite.entreprise.natureJuridique") or self._get_nested_value(data, "formality.content.personnePhysique.identite.entreprise.natureJuridique")
+        if activite:
+            parts.append(activite)
+        if nature:
+            parts.append(nature)
+        return " - ".join(parts) if parts else None

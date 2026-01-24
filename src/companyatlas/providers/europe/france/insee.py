@@ -17,8 +17,15 @@ class InseeProvider(CompanyAtlasFranceProvider):
     priority = 4
 
     fields_associations = {
-        "reference": ("siren", "siret", "uniteLegale.identifiantAssociationUniteLegale"),
         "denomination": "uniteLegale.denominationUniteLegale",
+        "reference": ("siren", "siret", "uniteLegale.identifiantAssociationUniteLegale"),
+        "address": (
+            "adresseEtablissement.numeroVoieEtablissement",
+            "adresseEtablissement.typeVoieEtablissement",
+            "adresseEtablissement.libelleVoieEtablissement",
+            "adresseEtablissement.codePostalEtablissement",
+            "adresseEtablissement.libelleCommuneEtablissement",
+        ),
     }
 
     def get_normalize_address_line1(self, data: dict[str, Any]) -> str | None:
@@ -34,6 +41,30 @@ class InseeProvider(CompanyAtlasFranceProvider):
         if libelle:
             parts.append(libelle)
         return " ".join(parts) if parts else None
+
+    def get_normalize_address(self, data: dict[str, Any]) -> str | None:
+        """Build full address from multiple fields."""
+        parts = []
+        numero = self._get_nested_value(data, "adresseEtablissement.numeroVoieEtablissement")
+        type_voie = self._get_nested_value(data, "adresseEtablissement.typeVoieEtablissement")
+        libelle = self._get_nested_value(data, "adresseEtablissement.libelleVoieEtablissement")
+        code_postal = self._get_nested_value(data, "adresseEtablissement.codePostalEtablissement")
+        commune = self._get_nested_value(data, "adresseEtablissement.libelleCommuneEtablissement")
+        
+        address_line = []
+        if numero:
+            address_line.append(str(numero))
+        if type_voie:
+            address_line.append(type_voie)
+        if libelle:
+            address_line.append(libelle)
+        if address_line:
+            parts.append(" ".join(address_line))
+        if code_postal:
+            parts.append(str(code_postal))
+        if commune:
+            parts.append(commune)
+        return ", ".join(parts) if parts else None
 
     def _detect_code_type(self, code: str) -> str | None:
         code_clean = re.sub(r"[\s-]", "", code)
