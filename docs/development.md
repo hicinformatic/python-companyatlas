@@ -67,7 +67,7 @@
 - Never hardcode API keys, credentials, or sensitive information
 - Use environment variables or configuration files for settings
 - Provide clear documentation on required configuration
-- Use provider-specific configuration prefixes (e.g., `NOMINATIM_`, `GOOGLE_MAPS_`, etc.)
+- Use provider-specific configuration prefixes (e.g., `INSEE_`, `INPI_`, `ENTDATAGOUV_`, etc.)
 
 ### Versioning
 

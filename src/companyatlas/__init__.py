@@ -19,6 +19,11 @@ COMPANYATLAS_SEARCH_COMPANY_FIELDS = {
         "description": "Country",
         "format": "str",
     },
+    "address": {
+        "label": "Address",
+        "description": "Address",
+        "format": "str",
+    },
     "data_source": {
         "label": "Data source",
         "description": "Data source",

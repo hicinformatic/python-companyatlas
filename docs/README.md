@@ -19,10 +19,10 @@ For detailed information, refer to:
 - Ensure all public APIs have type hints and docstrings
 - Write tests for new functionality
 
-### Geoaddress-Specific Guidelines
+### CompanyAtlas-Specific Guidelines
 
-- **Provider development**: All providers must inherit from `GeoaddressProvider` and implement required services
-- **Address format**: Always use the standardized address format defined in `GEOADDRESS_FIELDS_DESCRIPTIONS`
+- **Provider development**: All providers must inherit from `CompanyAtlasProvider` and implement required services
+- **Company format**: Always use the standardized company format defined in `COMPANYATLAS_SEARCH_COMPANY_FIELDS`
 - **ProviderKit integration**: Use ProviderKit for provider management, discovery, and configuration
 - **API keys**: Never hardcode API keys, use environment variables with provider-specific prefixes
 - **Error handling**: Handle API rate limits and failures gracefully with retry logic and fallback mechanisms
@@ -30,15 +30,17 @@ For detailed information, refer to:
 ### Provider Implementation Checklist
 
 When creating a new provider:
-- [ ] Inherit from `GeoaddressProvider`
+- [ ] Inherit from `CompanyAtlasProvider`
 - [ ] Define `name`, `display_name`, and `description`
 - [ ] Set `required_packages` if needed
 - [ ] Configure `config_keys` and `config_defaults`
-- [ ] Implement `search_addresses()` method
-- [ ] Implement `get_address_by_reference()` method
-- [ ] Implement `reverse_geocode()` method
-- [ ] Implement `get_address_by_osm()` method (if supported)
-- [ ] Map provider response to standard geoaddress format
+- [ ] Implement `search_company()` method
+- [ ] Implement `search_company_by_reference()` method
+- [ ] Implement `get_company_documents()` method (if supported)
+- [ ] Implement `get_company_events()` method (if supported)
+- [ ] Implement `get_company_officers()` method (if supported)
+- [ ] Implement `get_ultimate_beneficial_owners()` method (if supported)
+- [ ] Map provider response to standard company format
 - [ ] Handle errors gracefully
 - [ ] Add tests for the provider
 

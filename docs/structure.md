@@ -44,9 +44,14 @@ The `providers/` directory contains company data provider implementations:
 ### Helper Functions
 
 The `helpers.py` module provides:
-- `get_company_providers()`: Get company providers from various sources
-- `search_companies()`: Search companies using providers
-- `get_company_by_reference()`: Get company by reference ID
+- `get_companyatlas_providers()`: Get company providers from various sources
+- `get_companyatlas_provider()`: Get a single company provider by attribute search
+- `search_company()`: Search companies using providers
+- `search_company_by_reference()`: Get company by reference ID (SIREN, SIRET, RNA, etc.)
+- `get_company_documents()`: Get company documents using providers
+- `get_company_events()`: Get company events using providers
+- `get_company_officers()`: Get company officers using providers
+- `get_ultimate_beneficial_owners()`: Get ultimate beneficial owners using providers
 
 ### Package Exports
 

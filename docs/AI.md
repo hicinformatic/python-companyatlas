@@ -1,4 +1,4 @@
-# AI Assistant Contract — Geoaddress
+# AI Assistant Contract — CompanyAtlas
 
 **This document is the single source of truth for all AI-generated work in this repository.**  
 All instructions in this file **override default AI behavior**.
@@ -65,16 +65,16 @@ These rules must always be followed.
 
 ## Project Overview (INFORMATIONAL)
 
-**Geoaddress** is a Python library for address geocoding and reverse geocoding. It provides a unified interface to multiple geocoding providers (Nominatim, Google Maps, Mapbox, etc.) using ProviderKit for provider management.
+**CompanyAtlas** is a Python library for company information lookup and enrichment. It provides a unified interface to multiple company data providers (INSEE, INPI, Entdatagouv, etc.) using ProviderKit for provider management.
 
 ### Core Functionality
 
-1. **Search addresses** with multiple geocoding providers:
-   - Address geocoding (address → coordinates)
-   - Reverse geocoding (coordinates → address)
-   - Address validation and normalization
-   - Get address by reference ID
-   - Get address by OpenStreetMap ID
+1. **Search companies** with multiple data providers:
+   - Company lookup by name, domain, or identifier
+   - Company information enrichment
+   - Company data validation and normalization
+   - Get company by reference ID (SIREN, SIRET, RNA, etc.)
+   - Get company documents, events, officers, and beneficial owners
 
 2. **Manage multiple providers** through ProviderKit:
    - Provider discovery and enumeration
@@ -82,25 +82,25 @@ These rules must always be followed.
    - Configuration management per provider
    - Dependency validation (API keys, packages)
 
-3. **Standardized address format**:
-   - Consistent address field structure across all providers
-   - Field descriptions for address components
-   - Support for international addresses
+3. **Standardized company format**:
+   - Consistent company field structure across all providers
+   - Field descriptions for company components
+   - Support for international companies
+   - Structured company data (name, domain, industry, location, etc.)
 
 ### Supported Providers
 
-**Free providers**: Nominatim, Photon  
-**Paid/API key providers**: Google Maps, Mapbox, LocationIQ, OpenCage, Geocode Earth, Geoapify, Maps.co, HERE
+**French providers**: INSEE, INPI, Entdatagouv, Huwise
 
 ---
 
 ## Architecture (REQUIRED)
 
 - Provider-based architecture built on ProviderKit
-- Each geocoding service is implemented as a provider inheriting from `GeoaddressProvider`
-- `GeoaddressProvider` extends `ProviderBase` from ProviderKit
+- Each company data service is implemented as a provider inheriting from `CompanyAtlasProvider`
+- `CompanyAtlasProvider` extends `ProviderBase` from ProviderKit
 - Providers are organized in the `providers/` directory
-- Common functionality is shared through the base `GeoaddressProvider` class
+- Common functionality is shared through the base `CompanyAtlasProvider` class
 - Provider discovery and management is handled by ProviderKit
 
 ---
@@ -108,9 +108,9 @@ These rules must always be followed.
 ## Project Structure (INFORMATIONAL)
 
 ```
-python-geoaddress/
-├── src/geoaddress/          # Main package
-│   ├── providers/           # Address provider implementations
+python-companyatlas/
+├── src/companyatlas/        # Main package
+│   ├── providers/           # Company data provider implementations
 │   ├── commands/            # Command infrastructure
 │   ├── helpers.py           # Helper functions
 │   └── cli.py               # CLI interface
@@ -122,8 +122,8 @@ python-geoaddress/
 
 ### Key Directories
 
-- `src/geoaddress/providers/`: Address provider implementations
-- `src/geoaddress/commands/`: Command infrastructure for CLI system
+- `src/companyatlas/providers/`: Company data provider implementations
+- `src/companyatlas/commands/`: Command infrastructure for CLI system
 - `tests/`: All tests using pytest
 
 ---
@@ -190,7 +190,7 @@ python-geoaddress/
 - `providerkit` is an installed package
 - Always use standard Python imports:
   - `from providerkit import ProviderBase`
-  - `from providerkit.helpers import get_providers, try_providers`
+  - `from providerkit.helpers import get_providers, call_providers`
 - Never manipulate import paths
 - Never use file-based or relative imports to access `providerkit`
 - For dynamic imports, use:
@@ -213,12 +213,12 @@ python-geoaddress/
 
 ### Creating Providers
 
-Providers must inherit from `GeoaddressProvider`:
+Providers must inherit from `CompanyAtlasProvider`:
 
 ```python
-from geoaddress.providers import GeoaddressProvider
+from companyatlas.providers import CompanyAtlasProvider
 
-class MyProvider(GeoaddressProvider):
+class MyProvider(CompanyAtlasProvider):
     name = "my_provider"
     display_name = "My Provider"
     description = "Description of my provider"
@@ -226,24 +226,26 @@ class MyProvider(GeoaddressProvider):
     config_keys = ["MY_PROVIDER_API_KEY"]
     config_defaults = {"MY_PROVIDER_API_KEY": None}
     config_prefix = "MY_PROVIDER"
-    services = ["search_addresses", "get_address_by_reference", "reverse_geocode", "get_address_by_osm"]
+    services = ["search_company", "search_company_by_reference", "get_company_documents", "get_company_events"]
 ```
 
 ### Required Services
 
 All providers must implement:
-- `search_addresses(query: str, **kwargs)`: Search for addresses by query string
-- `get_address_by_reference(reference: str, **kwargs)`: Get address by provider-specific reference ID
-- `reverse_geocode(latitude: float, longitude: float, **kwargs)`: Convert coordinates to address
-- `get_address_by_osm(osm_id: str, osm_type: str, **kwargs)`: Get address by OpenStreetMap ID (if supported)
+- `search_company(query: str, **kwargs)`: Search for companies by query string
+- `search_company_by_reference(code: str, **kwargs)`: Get company by reference ID (SIREN, SIRET, RNA, etc.)
+- `get_company_documents(code: str, **kwargs)`: Get company documents (if supported)
+- `get_company_events(code: str, **kwargs)`: Get company events (if supported)
+- `get_company_officers(code: str, **kwargs)`: Get company officers (if supported)
+- `get_ultimate_beneficial_owners(code: str, **kwargs)`: Get ultimate beneficial owners (if supported)
 
-### Address Format Standardization
+### Company Format Standardization
 
-- All providers must return addresses in the standardized format defined by `GEOADDRESS_FIELDS_DESCRIPTIONS`
-- Map provider's native response format to standard geoaddress format
+- All providers must return companies in the standardized format defined by `COMPANYATLAS_SEARCH_COMPANY_FIELDS`
+- Map provider's native response format to standard company format
 - Use `None` or empty strings for missing optional fields
 - Never omit required fields
-- Store coordinates as floats with appropriate precision
+- Store company data with appropriate types and precision
 
 ---
 
@@ -255,7 +257,7 @@ All providers must implement:
 - `ENSURE_VIRTUALENV`
   - Set to `1` to automatically activate `.venv` if it exists
 - Provider-specific variables:
-  - Use provider-specific prefixes (e.g., `NOMINATIM_`, `GOOGLE_MAPS_`, `MAPBOX_`, etc.)
+  - Use provider-specific prefixes (e.g., `INSEE_`, `INPI_`, `ENTDATAGOUV_`, etc.)
   - Never hardcode API keys in code
 
 ---
@@ -295,7 +297,7 @@ All providers must implement:
 
 ## CLI System (INFORMATIONAL)
 
-Geoaddress discovers commands from:
+CompanyAtlas discovers commands from:
 
 1. `commands/` directory
 2. `.commands.json` configuration file
@@ -338,9 +340,9 @@ Before producing output, ensure:
 - [ ] Code is well-factorized when it improves clarity (without adding complexity)
 - [ ] Imports follow ProviderKit and Qualitybase rules
 - [ ] Public APIs are typed and documented
-- [ ] Providers inherit from GeoaddressProvider correctly
+- [ ] Providers inherit from CompanyAtlasProvider correctly
 - [ ] Providers implement all required services
-- [ ] Address format follows standardization (GEOADDRESS_FIELDS_DESCRIPTIONS)
+- [ ] Company format follows standardization (COMPANYATLAS_SEARCH_COMPANY_FIELDS)
 - [ ] No API keys or secrets are hardcoded
 - [ ] Tests are included when required
 - [ ] Error handling is graceful with fallback support

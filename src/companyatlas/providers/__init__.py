@@ -67,5 +67,13 @@ class CompanyAtlasProvider(ProviderBase):
     def get_normalize_data_source(self, data: dict[str, Any]) -> str:
         return str(data)
 
+    def response(self, *args: Any, **kwargs: Any) -> str:
+        readable = kwargs.pop('readable', False)
+        command = args[0]
+        mode = args[2]
+        if readable and mode == 'terminal':
+            del self.services_cfg[command]['fields']['data_source']
+        return super().response(*args, **kwargs)
+
 
 __all__ = ['CompanyAtlasProvider']

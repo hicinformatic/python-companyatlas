@@ -29,7 +29,16 @@ class InpiProvider(CompanyAtlasFranceProvider):
             "formality.siren",
             "formality.content.personneMorale.identite.entreprise.siren"
         ),
-        "denomination": "formality.content.personneMorale.identite.entreprise.denomination",
+        "denomination": (
+            "formality.content.personnePhysique.etablissementPrincipal.descriptionEtablissement.nomCommercial",
+            "formality.content.personneMorale.identite.entreprise.denomination",
+            "formality.content.personnePhysique.etablissementPrincipal.descriptionEtablissement.nomCommercial",
+            "formality.content.personnePhysique.identite.entreprise.denomination",
+        ),
+        "address": (
+            "formality.content.personneMorale.etablissementPrincipal.adresse",
+            "formality.content.personnePhysique.etablissementPrincipal.adresse",
+        ),
     }
 
     def _get_token(self) -> str | None:
@@ -95,3 +104,28 @@ class InpiProvider(CompanyAtlasFranceProvider):
         normalized = self.normalize(self.france_fields, result)
         return cast('dict[str, Any]', normalized) if normalized else None
 
+    def get_normalize_address(self, data: dict[str, Any]) -> str | None:
+        fields = [
+            "formality.content.personneMorale.etablissementPrincipal.adresse.pays",
+            "formality.content.personnePhysique.etablissementPrincipal.adresse.pays",
+            "formality.content.personneMorale.etablissementPrincipal.adresse.codePays",
+            "formality.content.personnePhysique.etablissementPrincipal.adresse.codePays",
+            "formality.content.personneMorale.etablissementPrincipal.adresse.codePostal",
+            "formality.content.personnePhysique.etablissementPrincipal.adresse.codePostal",
+            "formality.content.personneMorale.etablissementPrincipal.adresse.commune",
+            "formality.content.personnePhysique.etablissementPrincipal.adresse.commune",
+            "formality.content.personneMorale.etablissementPrincipal.adresse.codeInseeCommune",
+            "formality.content.personnePhysique.etablissementPrincipal.adresse.codeInseeCommune",
+            "formality.content.personneMorale.etablissementPrincipal.adresse.typeVoie",
+            "formality.content.personnePhysique.etablissementPrincipal.adresse.typeVoie",
+            "formality.content.personneMorale.etablissementPrincipal.adresse.voie",
+            "formality.content.personnePhysique.etablissementPrincipal.adresse.voie",
+            "formality.content.personneMorale.etablissementPrincipal.adresse.numVoie",
+            "formality.content.personnePhysique.etablissementPrincipal.adresse.numVoie",
+        ]
+        parts = []
+        for field in fields:
+            value = self._get_nested_value(data, field)
+            if value:
+                parts.append(value)
+        return " ".join(parts) if parts else None
