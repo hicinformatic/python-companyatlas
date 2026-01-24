@@ -24,6 +24,11 @@ COMPANYATLAS_SEARCH_COMPANY_FIELDS = {
         "description": "Address",
         "format": "str",
     },
+    "companyatlas_id": {
+        "label": "Companyatlas ID",
+        "description": "Companyatlas ID",
+        "format": "str",
+    },
     "data_source": {
         "label": "Data source",
         "description": "Data source",
@@ -37,6 +42,11 @@ COMPANYATLAS_GET_COMPANY_DOCUMENTS_FIELDS = {
         "description": "Documents",
         "format": "list",
     },
+    "companyatlas_id": {
+        "label": "Companyatlas ID",
+        "description": "Companyatlas ID",
+        "format": "str",
+    },
 }
 
 COMPANYATLAS_GET_COMPANY_EVENTS_FIELDS = {
@@ -44,6 +54,11 @@ COMPANYATLAS_GET_COMPANY_EVENTS_FIELDS = {
         "label": "Events",
         "description": "Events",
         "format": "list",
+    },
+    "companyatlas_id": {
+        "label": "Companyatlas ID",
+        "description": "Companyatlas ID",
+        "format": "str",
     },
 }
 
@@ -53,6 +68,11 @@ COMPANYATLAS_GET_COMPANY_OFFICERS_FIELDS = {
         "description": "Officers",
         "format": "list",
     },
+    "companyatlas_id": {
+        "label": "Companyatlas ID",
+        "description": "Companyatlas ID",
+        "format": "str",
+    },
 }
 
 COMPANYATLAS_GET_ULTIMATE_BENEFICIAL_OWNERS_FIELDS = {
@@ -60,6 +80,11 @@ COMPANYATLAS_GET_ULTIMATE_BENEFICIAL_OWNERS_FIELDS = {
         "label": "Ultimate beneficial owners",
         "description": "Ultimate beneficial owners",
         "format": "list",
+    },
+    "companyatlas_id": {
+        "label": "Companyatlas ID",
+        "description": "Companyatlas ID",
+        "format": "str",
     },
 }
 

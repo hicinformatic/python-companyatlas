@@ -18,6 +18,7 @@ class CompanyAtlasProvider(ProviderBase):
     geo_country = "world"
     geo_code = "ww"
     config_prefix = "COMPANYATLAS"
+    provider_key = "key"
     _default_services_cfg = {
         "search_company": {
             "label": "Search company",
@@ -67,11 +68,16 @@ class CompanyAtlasProvider(ProviderBase):
     def get_normalize_data_source(self, data: dict[str, Any]) -> str:
         return str(data)
 
+    def get_insert_normalized_companyatlas_id(self, data: Any, normalized: dict[str, Any], _config: dict[str, Any]) -> float | None:        
+        reference = normalized.get("reference")
+        return f"{self.name}_{reference}"
+
     def response(self, *args: Any, **kwargs: Any) -> str:
         readable = kwargs.pop('readable', False)
         command = args[0]
         mode = args[2]
         if readable and mode == 'terminal':
+            del self.services_cfg[command]['fields']['companyatlas_id']
             del self.services_cfg[command]['fields']['data_source']
         return super().response(*args, **kwargs)
 

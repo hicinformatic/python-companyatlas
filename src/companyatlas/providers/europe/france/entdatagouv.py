@@ -20,9 +20,20 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
     priority = 2
 
     fields_associations = {
-        "reference": ("complements.identifiant_association", "siege.siret", "siege.siren", "siren"),
         "denomination": ["nom_raison_sociale", "nom_complet"],
-
+        "reference": ["complements.identifiant_association", "siege.siret", "siege.siren", "siren"],
+        "address": (
+            "siege.numero_voie",
+            "siege.type_voie",
+            "siege.libelle_voie",
+            "siege.code_postal",
+            "siege.ville",
+            "matching_etablissements.0.numero_voie",
+            "matching_etablissements.0.type_voie",
+            "matching_etablissements.0.libelle_voie",
+            "matching_etablissements.0.code_postal",
+            "matching_etablissements.0.ville",
+        ),
     }
 
     def _call_api(self, url: str) -> dict[str, Any]:
@@ -35,6 +46,30 @@ class EntdatagouvProvider(CompanyAtlasFranceProvider):
         tv = self._get_nested_value(data, ["siege.type_voie", "matching_etablissements.0.type_voie"])
         lv = self._get_nested_value(data, ["siege.libelle_voie", "matching_etablissements.0.libelle_voie"])
         return f"{nv} {tv} {lv}"
+
+    def get_normalize_address(self, data: dict[str, Any]) -> str | None:
+        """Build full address from multiple fields."""
+        parts = []
+        nv = self._get_nested_value(data, ["siege.numero_voie", "matching_etablissements.0.numero_voie"])
+        tv = self._get_nested_value(data, ["siege.type_voie", "matching_etablissements.0.type_voie"])
+        lv = self._get_nested_value(data, ["siege.libelle_voie", "matching_etablissements.0.libelle_voie"])
+        cp = self._get_nested_value(data, ["siege.code_postal", "matching_etablissements.0.code_postal"])
+        ville = self._get_nested_value(data, ["siege.ville", "matching_etablissements.0.ville"])
+        
+        address_line = []
+        if nv:
+            address_line.append(str(nv))
+        if tv:
+            address_line.append(tv)
+        if lv:
+            address_line.append(lv)
+        if address_line:
+            parts.append(" ".join(address_line))
+        if cp:
+            parts.append(str(cp))
+        if ville:
+            parts.append(ville)
+        return ", ".join(parts) if parts else None
 
     def search_company(self, query: str, raw: bool = False, **kwargs: Any) -> list[dict[str, Any]]:
         """Search for a company by name."""

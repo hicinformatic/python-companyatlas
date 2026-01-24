@@ -19,9 +19,40 @@ class HuwiseProvider(CompanyAtlasFranceProvider):
     priority = 3
 
     fields_associations = {
-        "reference": ("identifiantassociationunitelegale", "siret", "siren"),
         "denomination": ("denominationunitelegale", "denominationusuelleetablissement"),
+        "reference": ("identifiantassociationunitelegale", "siret", "siren"),
+        "address": (
+            "numerovoieetablissement",
+            "typevoieetablissement",
+            "libellevoieetablissement",
+            "codepostaletablissement",
+            "libellecommuneetablissement",
+        ),
     }
+
+    def get_normalize_address(self, data: dict[str, Any]) -> str | None:
+        """Build full address from multiple fields."""
+        parts = []
+        numero = self._get_nested_value(data, "numerovoieetablissement")
+        type_voie = self._get_nested_value(data, "typevoieetablissement")
+        libelle = self._get_nested_value(data, "libellevoieetablissement")
+        code_postal = self._get_nested_value(data, "codepostaletablissement")
+        commune = self._get_nested_value(data, "libellecommuneetablissement")
+        
+        address_line = []
+        if numero:
+            address_line.append(str(numero))
+        if type_voie:
+            address_line.append(type_voie)
+        if libelle:
+            address_line.append(libelle)
+        if address_line:
+            parts.append(" ".join(address_line))
+        if code_postal:
+            parts.append(str(code_postal))
+        if commune:
+            parts.append(commune)
+        return ", ".join(parts) if parts else None
 
     def _call_api(self, query: str) -> dict[str, Any]:
         dataset_id = self._get_config_or_env("SIREN_DATASET_ID", default="economicref-france-sirene-v3")
