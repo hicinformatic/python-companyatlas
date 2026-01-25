@@ -102,13 +102,7 @@ class InpiProvider(CompanyAtlasFranceProvider):
         siren = self._format_siren(code)
         if not self._validate_siren(siren):
             return None
-        result = self._call_api(f"{self._get_config_or_env('BASE_URL')}/api/companies/{siren}")
-        if not result or not isinstance(result, dict):
-            return None
-        if raw:
-            return cast('dict[str, Any]', result)
-        normalized = self.normalize(self.france_fields, result)
-        return cast('dict[str, Any]', normalized) if normalized else None
+        return self._call_api(f"{self._get_config_or_env('BASE_URL')}/api/companies/{siren}")
 
     def get_normalize_address(self, data: dict[str, Any]) -> str | None:
         """Build full address from multiple fields."""

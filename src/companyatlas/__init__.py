@@ -34,6 +34,16 @@ COMPANYATLAS_SEARCH_COMPANY_FIELDS = {
         "description": "Data source",
         "format": "str",
     },
+    "backend": {
+        "label": "Backend display name",
+        "description": "Backend display name",
+        "format": "str",
+    },
+    "backend_name": {
+        "label": "Simple backend name (e.g., insee)",
+        "description": "Simple backend name (e.g., insee)",
+        "format": "str",
+    },
 }
 
 COMPANYATLAS_GET_COMPANY_DOCUMENTS_FIELDS = {

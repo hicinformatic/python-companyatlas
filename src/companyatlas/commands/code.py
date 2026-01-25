@@ -12,6 +12,7 @@ from companyatlas.helpers import search_company_by_reference
 _ARG_CONFIG = {
     **_PROVIDER_COMMAND_CONFIG,
     'code': {'type': str, 'default': ''},
+    'readable': {'type': 'store_true'},
 }
 
 
@@ -23,6 +24,7 @@ def _code_command(args: list[str]) -> bool:
     raw = parsed.get('raw', False)
     code = parsed.pop('code')
     first = parsed.pop('first', False)
+    readable = parsed.get('readable', False)
     pvs_companies = search_company_by_reference(code, first=first, **kwargs)
     for pv in pvs_companies:
         name = pv['provider'].name
@@ -30,7 +32,7 @@ def _code_command(args: list[str]) -> bool:
         print_separator()
         print_header(f"{name} - {time}s")
         print_separator()
-        print(pv['provider'].response('search_company_by_reference', raw, output_format))
+        print(pv['provider'].response('search_company_by_reference', raw, output_format, readable=readable))
     return True
 
 
