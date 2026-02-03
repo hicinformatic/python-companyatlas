@@ -14,6 +14,11 @@ COMPANYATLAS_SEARCH_COMPANY_FIELDS = {
         "description": "Reference",
         "format": "str",
     },
+    "source_field": {
+        "label": "Source field",
+        "description": "Source field",
+        "format": "str",
+    },
     "country": {
         "label": "Country",
         "description": "Country",
