@@ -32,8 +32,9 @@ class InseeProvider(CompanyAtlasFranceProvider):
         number = self._get_nested_value(data, "adresseEtablissement.numeroVoieEtablissement")
         street_type = self._get_nested_value(data, "adresseEtablissement.typeVoieEtablissement")
         street_name = self._get_nested_value(data, "adresseEtablissement.libelleVoieEtablissement")
+        address_parts = [part for part in [number, street_type, street_name] if part]
         return {
-            "address_line1": " ".join([number, street_type, street_name]),
+            "address_line1": " ".join(address_parts) if address_parts else None,
             "postal_code": self._get_nested_value(data, "adresseEtablissement.codePostalEtablissement"),
             "city": self._get_nested_value(data, "adresseEtablissement.libelleCommuneEtablissement"),
             "country": self._get_nested_value(data, "adresseEtablissement.libellePaysEtablissement", self.geo_country),

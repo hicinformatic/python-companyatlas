@@ -62,7 +62,6 @@ class InpiProvider(CompanyAtlasFranceProvider):
                 headers={"Content-Type": "application/json"},
                 timeout=10,
             )
-            print(response.text)
             response.raise_for_status()
             data = response.json()
             self._token = data.get("token") or data.get("access_token")

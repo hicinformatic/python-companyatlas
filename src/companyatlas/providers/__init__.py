@@ -9,6 +9,7 @@ from .. import (
     COMPANYATLAS_GET_COMPANY_EVENTS_FIELDS,
     COMPANYATLAS_GET_COMPANY_OFFICERS_FIELDS,
     COMPANYATLAS_GET_ULTIMATE_BENEFICIAL_OWNERS_FIELDS,
+    COMPANYATLAS_GET_REFERENTIEL_FIELDS,
     COMPANYATLAS_SEARCH_COMPANY_FIELDS,
 )
 
@@ -56,6 +57,12 @@ class CompanyAtlasProvider(ProviderBase):
             "format": "str",
             "fields": COMPANYATLAS_GET_ULTIMATE_BENEFICIAL_OWNERS_FIELDS,
         },
+        "get_referentiel": {
+            "label": "Get referentiel",
+            "description": "Get referentiel data (governance sources, legal frameworks, etc.)",
+            "format": "list",
+            "fields": COMPANYATLAS_GET_REFERENTIEL_FIELDS,
+        }
     }
 
     @property

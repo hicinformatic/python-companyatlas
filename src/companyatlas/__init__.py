@@ -108,10 +108,44 @@ COMPANYATLAS_GET_ULTIMATE_BENEFICIAL_OWNERS_FIELDS = {
     },
 }
 
+COMPANYATLAS_GET_REFERENTIEL_FIELDS = {
+    "category": {
+        "label": "Category",
+        "description": "Referentiel category",
+        "format": "str",
+    },
+    "code": {
+        "label": "Code",
+        "description": "Referentiel code",
+        "format": "str",
+    },
+    "description": {
+        "label": "Description",
+        "description": "Referentiel description",
+        "format": "str",
+    },
+    "characteristics": {
+        "label": "Characteristics",
+        "description": "Referentiel characteristics",
+        "format": "str",
+    },
+    "priority": {
+        "label": "Priority",
+        "description": "Referentiel priority",
+        "format": "int",
+    },
+    "usage_type": {
+        "label": "Usage Type",
+        "description": "Usage type (description, configuration, characteristics)",
+        "format": "str",
+    },
+}
+
 __all__ = [
     "COMPANYATLAS_SEARCH_COMPANY_FIELDS",
     "COMPANYATLAS_GET_COMPANY_DOCUMENTS_FIELDS",
     "COMPANYATLAS_GET_COMPANY_EVENTS_FIELDS",
     "COMPANYATLAS_GET_COMPANY_OFFICERS_FIELDS",
     "COMPANYATLAS_GET_ULTIMATE_BENEFICIAL_OWNERS_FIELDS",
+    "COMPANYATLAS_GET_REFERENTIEL_FIELDS",
 ]
