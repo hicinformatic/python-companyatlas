@@ -28,42 +28,44 @@ class InseeProvider(CompanyAtlasFranceProvider):
         ),
     }
 
-    def get_normalize_address_line1(self, data: dict[str, Any]) -> str | None:
-        """Build address_line1 from multiple fields."""
-        numero = self._get_nested_value(data, "adresseEtablissement.numeroVoieEtablissement")
-        type_voie = self._get_nested_value(data, "adresseEtablissement.typeVoieEtablissement")
-        libelle = self._get_nested_value(data, "adresseEtablissement.libelleVoieEtablissement")
-        parts = []
-        if numero:
-            parts.append(str(numero))
-        if type_voie:
-            parts.append(type_voie)
-        if libelle:
-            parts.append(libelle)
-        return " ".join(parts) if parts else None
+    def get_normalize_address_json(self, data: dict[str, Any]) -> dict[str, Any] | None:
+        number = self._get_nested_value(data, "adresseEtablissement.numeroVoieEtablissement")
+        street_type = self._get_nested_value(data, "adresseEtablissement.typeVoieEtablissement")
+        street_name = self._get_nested_value(data, "adresseEtablissement.libelleVoieEtablissement")
+        return {
+            "address_line1": " ".join([number, street_type, street_name]),
+            "postal_code": self._get_nested_value(data, "adresseEtablissement.codePostalEtablissement"),
+            "city": self._get_nested_value(data, "adresseEtablissement.libelleCommuneEtablissement"),
+            "country": self._get_nested_value(data, "adresseEtablissement.libellePaysEtablissement", self.geo_country),
+            "country_code": self._get_nested_value(data, "adresseEtablissement.libellePaysEtablissement", self.geo_code),
+        }
+
 
     def get_normalize_address(self, data: dict[str, Any]) -> str | None:
         """Build full address from multiple fields."""
         parts = []
-        numero = self._get_nested_value(data, "adresseEtablissement.numeroVoieEtablissement")
-        type_voie = self._get_nested_value(data, "adresseEtablissement.typeVoieEtablissement")
-        libelle = self._get_nested_value(data, "adresseEtablissement.libelleVoieEtablissement")
-        code_postal = self._get_nested_value(data, "adresseEtablissement.codePostalEtablissement")
-        commune = self._get_nested_value(data, "adresseEtablissement.libelleCommuneEtablissement")
+        number = self._get_nested_value(data, "adresseEtablissement.numeroVoieEtablissement")
+        street_type = self._get_nested_value(data, "adresseEtablissement.typeVoieEtablissement")
+        street_name = self._get_nested_value(data, "adresseEtablissement.libelleVoieEtablissement")
+        postal_code = self._get_nested_value(data, "adresseEtablissement.codePostalEtablissement")
+        city = self._get_nested_value(data, "adresseEtablissement.libelleCommuneEtablissement")
+        country = self._get_nested_value(data, "adresseEtablissement.libellePaysEtablissement", self.geo_country)
         
         address_line = []
-        if numero:
-            address_line.append(str(numero))
-        if type_voie:
-            address_line.append(type_voie)
-        if libelle:
-            address_line.append(libelle)
+        if number:
+            address_line.append(str(number))
+        if street_type:
+            address_line.append(street_type)
+        if street_name:
+            address_line.append(street_name)
         if address_line:
             parts.append(" ".join(address_line))
-        if code_postal:
-            parts.append(str(code_postal))
-        if commune:
-            parts.append(commune)
+        if postal_code:
+            parts.append(str(postal_code))
+        if city:
+            parts.append(city)
+        if country:
+            parts.append(country)
         return ", ".join(parts) if parts else None
 
     def _detect_code_type(self, code: str) -> str | None:

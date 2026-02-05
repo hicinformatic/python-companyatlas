@@ -65,6 +65,9 @@ class CompanyAtlasProvider(ProviderBase):
     def get_normalize_country(self, data: dict[str, Any]) -> str:
         return self.geo_data
 
+    def get_normalize_country_code(self, data: dict[str, Any]) -> str:
+        return self.geo_code
+
     def get_normalize_data_source(self, data: dict[str, Any]) -> str:
         return str(data)
 
@@ -79,6 +82,7 @@ class CompanyAtlasProvider(ProviderBase):
         if readable and mode == 'terminal':
             del self.services_cfg[command]['fields']['companyatlas_id']
             del self.services_cfg[command]['fields']['data_source']
+            del self.services_cfg[command]['fields']['address_json']
         return super().response(*args, **kwargs)
 
 

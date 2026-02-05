@@ -19,15 +19,20 @@ COMPANYATLAS_SEARCH_COMPANY_FIELDS = {
         "description": "Source field",
         "format": "str",
     },
-    "country": {
-        "label": "Country",
-        "description": "Country",
+    "country_code": {
+        "label": "Country code",
+        "description": "Country code",
         "format": "str",
     },
     "address": {
         "label": "Address",
         "description": "Address",
         "format": "str",
+    },
+    "address_json": {
+        "label": "Address JSON",
+        "description": "Address JSON",
+        "format": "json",
     },
     "companyatlas_id": {
         "label": "Companyatlas ID",

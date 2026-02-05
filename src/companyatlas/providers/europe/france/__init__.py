@@ -93,15 +93,8 @@ class CompanyAtlasFranceProvider(CompanyAtlasEuropeProvider):
 
     def get_normalize_source_field(self, data: dict[str, Any]) -> str | None:
         """Get the source field for a code (siren, siret, rna)."""
-        for k,v in self._service_results_cache.get("search_company_by_reference").items():
-            print(k)
-        return "test"
-        #code_type = self._detect_code_type(code)
-        #if not code_type:
-        #    return None
-        #if code_type == "siren":
-        #    return "siren"
-        #if code_type == "siret":
-        #    return "siret"
-        #if code_type == "rna":
-        #    return "rna"
+        cache = self._service_results_cache.get("search_company_by_reference", {})
+        kwargs = cache.get("kwargs", {})
+        code = kwargs.get("code", "")
+        return self._detect_code_type(code)
+
