@@ -51,6 +51,9 @@ where = ["src"]
 include = ["django_companyatlas*"]
 exclude = ["tests*", "docs*"]
 
+[tool.setuptools.package-data]
+django_companyatlas = ["templates/**/*"]
+
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.settings"
 python_files = ["test_*.py", "*_test.py"]
