@@ -1,6 +1,7 @@
 from .address import OrganizationAtlasAddressAdmin
 from .organization import OrganizationAtlasOrganizationAdmin
 from .data import OrganizationAtlasDataAdmin
+from .delegation import OrganizationAtlasDelegationAdmin
 from .document import OrganizationDocumentAdmin
 from .event import OrganizationEventAdmin
 from .person import OrganizationAtlasPersonAdmin
@@ -13,6 +14,7 @@ from .virtuals.provider import OrganizationAtlasProviderModel
 __all__ = [
     "OrganizationAtlasOrganizationAdmin",
     "OrganizationAtlasDataAdmin",
+    "OrganizationAtlasDelegationAdmin",
     "OrganizationAtlasAddressAdmin",
     "OrganizationDocumentAdmin",
     "OrganizationEventAdmin",
@@ -23,4 +25,3 @@ __all__ = [
     "OrganizationAtlasVirtualDocumentAdmin",
     "OrganizationAtlasVirtualEventAdmin",
 ]
-
