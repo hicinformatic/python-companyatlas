@@ -70,7 +70,7 @@ class OrganizationAtlasStakeholderRelation(TemporalValidityMixin, OrganizationAt
         ]
         constraints = [
             models.CheckConstraint(
-                condition=(
+                check=(
                     models.Q(from_person__isnull=False, from_organization__isnull=True)
                     | models.Q(from_person__isnull=True, from_organization__isnull=False)
                 ),

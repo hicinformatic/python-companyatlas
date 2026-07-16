@@ -96,7 +96,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='Updated at')),
                 ('denomination', models.CharField(help_text='Organization denomination', max_length=255, verbose_name='Denomination')),
                 ('code', models.CharField(help_text='Organization code', max_length=255, verbose_name='Code')),
-                ('named_id', namedid.fields.NamedIDField(blank=False, help_text='Named ID', null=False, source_fields=['denomination', 'code'], unique=True, verbose_name='Named ID')),
+                ('named_id', namedid.fields.NamedIDField(blank=False, help_text='Named ID', max_length=512, null=False, source_fields=['denomination', 'code'], unique=True, verbose_name='Named ID')),
             ],
             options={
                 'verbose_name': 'Organization',
@@ -329,7 +329,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='organizationatlasstakeholderrelation',
-            constraint=models.CheckConstraint(condition=models.Q(models.Q(('from_organization__isnull', True), ('from_person__isnull', False)), models.Q(('from_organization__isnull', False), ('from_person__isnull', True)), _connector='OR'), name='stakeholder_relation_exactly_one_from'),
+            constraint=models.CheckConstraint(check=models.Q(models.Q(('from_organization__isnull', True), ('from_person__isnull', False)), models.Q(('from_organization__isnull', False), ('from_person__isnull', True)), _connector='OR'), name='stakeholder_relation_exactly_one_from'),
         ),
         migrations.AddConstraint(
             model_name='organizationatlasstakeholderrelation',

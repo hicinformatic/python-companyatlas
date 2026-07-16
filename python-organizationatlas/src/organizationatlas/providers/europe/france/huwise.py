@@ -30,6 +30,10 @@ class HuwiseProvider(OrganizationAtlasFranceProvider):
             "codepostaletablissement",
             "libellecommuneetablissement",
         ),
+        "legalform": "categoriejuridiqueunitelegale",
+        "ape": "activiteprincipaleunitelegale",
+        "slice_effective": ("trancheeffectifsunitelegale", "trancheeffectifsetablissement"),
+        "category": "naturejuridiqueunitelegale",
     }
 
     def _get_address_parts(self, data: dict[str, Any]) -> tuple:

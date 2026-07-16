@@ -30,6 +30,7 @@ class OrganizationAtlasOrganization(OrganizationAtlasSourceBase):
     )
     named_id = NamedIDField(
         source_fields=["denomination", "code"],
+        max_length=512,
         verbose_name=_("Named ID"),
         help_text=_("Named ID"),
     )

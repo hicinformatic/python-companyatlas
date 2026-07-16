@@ -9,6 +9,7 @@ from .organization import OrganizationAtlasOrganization
 from .referentiel import OrganizationAtlasReferentiel
 from .source import OrganizationAtlasSourceBase
 from .temporal import TemporalValidityMixin
+from ..managers.data import OrganizationAtlasDataManager
 
 
 class OrganizationAtlasData(TemporalValidityMixin, OrganizationAtlasSourceBase):
@@ -52,6 +53,8 @@ class OrganizationAtlasData(TemporalValidityMixin, OrganizationAtlasSourceBase):
         blank=True,
     )
 
+    objects = OrganizationAtlasDataManager()
+
     class Meta:
         verbose_name = _("Organization Data")
         verbose_name_plural = _("Organization Data")
@@ -81,3 +84,15 @@ class OrganizationAtlasData(TemporalValidityMixin, OrganizationAtlasSourceBase):
             return self.sql_referentiel_description
         first = self.referentiel.values_list("description", flat=True).first()
         return first or ""
+
+    @property
+    def resolved_referentiel_description(self):
+        if hasattr(self, "sql_resolved_referentiel_description"):
+            return self.sql_resolved_referentiel_description or ""
+
+        referentiel = OrganizationAtlasReferentiel.objects.filter(
+            category=self.data_type,
+            country_code=self.country_code,
+            code=self.value,
+        ).first()
+        return referentiel.description if referentiel else ""

@@ -38,6 +38,7 @@ class TestFranceProviderValidation:
     def provider(self):
         class ConcreteProvider(OrganizationAtlasFranceProvider):
             name = "test"
+            display_name = "Test"
             abstract = False
         return ConcreteProvider()
 
@@ -56,6 +57,9 @@ class TestFranceProviderValidation:
     def test_is_rna(self, provider):
         assert provider.is_rna("W12345678")
         assert provider.is_rna("w12345678")
+        assert not provider.is_rna("W")
+        assert not provider.is_rna("W123")
+        assert not provider.is_rna("W123456789")
         assert not provider.is_rna("123456789")
         assert not provider.is_rna("")
 

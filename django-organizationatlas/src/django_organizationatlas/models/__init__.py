@@ -3,6 +3,7 @@
 from .address import OrganizationAtlasAddress
 from .organization import OrganizationAtlasOrganization
 from .data import OrganizationAtlasData
+from .delegation import OrganizationAtlasDelegation
 from .document import OrganizationAtlasDocument
 from .event import OrganizationAtlasEvent
 from .person import OrganizationAtlasPerson
@@ -19,6 +20,7 @@ from .virtuals import (
 __all__ = [
     "OrganizationAtlasOrganization",
     "OrganizationAtlasData",
+    "OrganizationAtlasDelegation",
     "OrganizationAtlasDocument",
     "OrganizationAtlasEvent",
     "OrganizationAtlasAddress",

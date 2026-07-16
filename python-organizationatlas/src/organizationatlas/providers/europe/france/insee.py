@@ -20,7 +20,7 @@ class InseeProvider(OrganizationAtlasFranceProvider):
 
     fields_associations = {
         "denomination": "uniteLegale.denominationUniteLegale",
-        "reference": ("siren", "siret", "uniteLegale.identifiantAssociationUniteLegale"),
+        "reference": ("uniteLegale.identifiantAssociationUniteLegale", "siret", "siren"),
         "address": (
             "adresseEtablissement.numeroVoieEtablissement",
             "adresseEtablissement.typeVoieEtablissement",
@@ -28,6 +28,10 @@ class InseeProvider(OrganizationAtlasFranceProvider):
             "adresseEtablissement.codePostalEtablissement",
             "adresseEtablissement.libelleCommuneEtablissement",
         ),
+        "legalform": "uniteLegale.categorieJuridiqueUniteLegale",
+        "ape": "uniteLegale.activitePrincipaleUniteLegale",
+        "slice_effective": ("uniteLegale.trancheEffectifsUniteLegale", "trancheEffectifsEtablissement"),
+        "category": "uniteLegale.categorieEntreprise",
     }
 
     def _get_address_parts(self, data: dict[str, Any]) -> tuple:

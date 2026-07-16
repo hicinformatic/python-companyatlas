@@ -7,6 +7,7 @@ from ..models.organization import ORGANIZATIONATLAS_FIELDS_COMPANY, Organization
 from ..models.source import ORGANIZATIONATLAS_FIELDS_SOURCE
 from .address import OrganizationAtlasAddressInline
 from .data import OrganizationAtlasDataInline
+from .delegation import OrganizationAtlasDelegationInline
 
 
 @admin.register(OrganizationAtlasOrganization)
@@ -15,7 +16,11 @@ class OrganizationAtlasOrganizationAdmin(AdminBoostModel):
     list_filter = ["created_at"]
     search_fields = ["denomination", "code", "to_organizationatlasdata__value"]
     readonly_fields = ["named_id", "created_at", "updated_at"]
-    inlines = [OrganizationAtlasDataInline, OrganizationAtlasAddressInline]
+    inlines = [
+        OrganizationAtlasDataInline,
+        OrganizationAtlasAddressInline,
+        OrganizationAtlasDelegationInline,
+    ]
     changeform_actions = {
         "refresh_person": _("Refresh Persons"),
         "refresh_address": _("Refresh Addresses"),
@@ -44,7 +49,7 @@ class OrganizationAtlasOrganizationAdmin(AdminBoostModel):
     headquarters_address_display.short_description = _("Headquarters Address")
 
     def handle_refresh_person(self, request, object_id):
-        print("ok")
+        pass
 
     @admin_boost_view("message", _("Search Organization"))
     def search_organization(self, request):

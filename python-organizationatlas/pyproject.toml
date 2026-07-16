@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "python-organizationatlas"
-version = "0.1.0"
+version = "0.1.1"
 description = ""
 readme = "README.md"
 requires-python = ">=3.10"
@@ -14,7 +14,8 @@ authors = [
 ]
 dependencies = [
   "clicommands>=0.1.0",
-  "providerkit",
+  "providerkit>=1.1.2",
+  "requests>=2",
 ]
 
 [project.scripts]
@@ -33,6 +34,12 @@ package-data = {organizationatlas = [".commands.json"]}
 where = ["src"]
 exclude = ["tests*", "docs*"]
 
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
@@ -40,4 +47,3 @@ addopts = "-ra --strict-markers"
 markers = [
   "slow: marks tests as slow (deselect with '-m \"not slow\"')",
 ]
-

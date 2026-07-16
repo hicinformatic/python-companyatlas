@@ -68,6 +68,45 @@ class TestInpiProviderApiPaths:
         assert normalized["denomination"] == "OCTOLO"
         assert normalized["reference"] == "917432254"
 
+    def test_normalize_reference_prefers_siret_over_siren(self):
+        provider = InpiProvider()
+        data = {
+            "siren": "917432254",
+            "formality": {
+                "content": {
+                    "personneMorale": {
+                        "etablissementPrincipal": {
+                            "descriptionEtablissement": {
+                                "siret": "91743225400014",
+                            },
+                        },
+                    },
+                },
+            },
+        }
+
+        normalized = provider.normalize(data, config=provider.services_cfg["search_organization"])
+
+        assert normalized["reference"] == "91743225400014"
+        assert normalized["source_field"] == "siret"
+
+    def test_normalize_ape_from_inpi_code_uses_referentiel_format(self):
+        provider = InpiProvider()
+        data = {
+            "siren": "917432254",
+            "formality": {
+                "content": {
+                    "personneMorale": {
+                        "identite": {"entreprise": {"codeApe": "6201Z"}},
+                    },
+                },
+            },
+        }
+
+        normalized = provider.normalize(data, config=provider.services_cfg["search_organization"])
+
+        assert normalized["ape"] == "62.01Z"
+
     def test_normalize_denomination_personne_physique_autres_etablissements(self):
         provider = InpiProvider()
         data = {

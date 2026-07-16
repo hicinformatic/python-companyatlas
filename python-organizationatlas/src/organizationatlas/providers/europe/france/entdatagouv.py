@@ -36,6 +36,10 @@ class EntdatagouvProvider(OrganizationAtlasFranceProvider):
             "matching_etablissements.0.code_postal",
             "matching_etablissements.0.libelle_commune",
         ),
+        "legalform": "nature_juridique",
+        "ape": "siege.activite_principale",
+        "slice_effective": "siege.tranche_effectif_salarie",
+        "category": "categorie_entreprise",
     }
 
     _SIEGE_KEYS = ["siege.numero_voie", "matching_etablissements.0.numero_voie"]

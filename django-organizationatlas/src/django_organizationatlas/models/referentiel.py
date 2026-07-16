@@ -16,7 +16,6 @@ class OrganizationAtlasReferentiel(OrganizationAtlasSourceBase):
         max_length=255,
         verbose_name=_("Code"),
         help_text=_("Referentiel code"),
-        unique=True,
     )
     description = models.TextField(
         blank=True,
@@ -55,6 +54,12 @@ class OrganizationAtlasReferentiel(OrganizationAtlasSourceBase):
         ordering = ["-priority", "category", "code"]
         indexes = [
             models.Index(fields=["category"]),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["category", "country_code", "code"],
+                name="unique_referentiel_country_code",
+            ),
         ]
 
     @property

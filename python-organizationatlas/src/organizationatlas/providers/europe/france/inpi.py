@@ -35,11 +35,15 @@ class InpiProvider(OrganizationAtlasFranceProvider):
     fields_associations = {
         "reference": (
             "content.personneMorale.etablissementPrincipal.descriptionEtablissement.siret",
+            "formality.content.personneMorale.etablissementPrincipal.descriptionEtablissement.siret",
+            "content.personnePhysique.etablissementPrincipal.descriptionEtablissement.siret",
+            "formality.content.personnePhysique.etablissementPrincipal.descriptionEtablissement.siret",
             "siren",
             "formality.siren",
             "content.personneMorale.identite.entreprise.siren",
-            "formality.content.personneMorale.etablissementPrincipal.descriptionEtablissement.siret",
+            "content.personnePhysique.identite.entreprise.siren",
             "formality.content.personneMorale.identite.entreprise.siren",
+            "formality.content.personnePhysique.identite.entreprise.siren",
         ),
         "denomination": (
             "content.personneMorale.identite.entreprise.denomination",
@@ -50,6 +54,40 @@ class InpiProvider(OrganizationAtlasFranceProvider):
             "companyName",
             "formality.content.personneMorale.identite.entreprise.denomination",
             "formality.content.personnePhysique.identite.entreprise.denomination",
+        ),
+        "legalform": (
+            "formeJuridique",
+            "content.natureCreation.formeJuridique",
+            "content.personneMorale.identite.entreprise.formeJuridique",
+            "content.personnePhysique.identite.entreprise.formeJuridique",
+            "formality.content.natureCreation.formeJuridique",
+            "formality.content.personneMorale.identite.entreprise.formeJuridique",
+            "formality.content.personnePhysique.identite.entreprise.formeJuridique",
+        ),
+        "ape": (
+            "content.personneMorale.identite.entreprise.codeApe",
+            "content.personnePhysique.identite.entreprise.codeApe",
+            "content.personneMorale.etablissementPrincipal.descriptionEtablissement.codeApe",
+            "content.personnePhysique.etablissementPrincipal.descriptionEtablissement.codeApe",
+            "formality.content.personneMorale.identite.entreprise.codeApe",
+            "formality.content.personnePhysique.identite.entreprise.codeApe",
+            "formality.content.personneMorale.etablissementPrincipal.descriptionEtablissement.codeApe",
+            "formality.content.personnePhysique.etablissementPrincipal.descriptionEtablissement.codeApe",
+        ),
+        "slice_effective": (
+            "content.personneMorale.identite.entreprise.trancheEffectifs",
+            "content.personnePhysique.identite.entreprise.trancheEffectifs",
+            "formality.content.personneMorale.identite.entreprise.trancheEffectifs",
+            "formality.content.personnePhysique.identite.entreprise.trancheEffectifs",
+        ),
+        "category": (
+            "formeJuridique",
+            "content.natureCreation.formeJuridique",
+            "content.personneMorale.identite.entreprise.formeJuridique",
+            "content.personnePhysique.identite.entreprise.formeJuridique",
+            "formality.content.natureCreation.formeJuridique",
+            "formality.content.personneMorale.identite.entreprise.formeJuridique",
+            "formality.content.personnePhysique.identite.entreprise.formeJuridique",
         ),
     }
 
@@ -87,7 +125,9 @@ class InpiProvider(OrganizationAtlasFranceProvider):
         response.raise_for_status()
         return cast("dict[str, Any] | list[dict[str, Any]]", response.json())
 
-    def _content_root(self, data: dict[str, Any]) -> dict[str, Any] | None:
+    def _content_root(self, data: dict[str, Any] | None) -> dict[str, Any] | None:
+        if not isinstance(data, dict):
+            return None
         content = data.get("content")
         if isinstance(content, dict):
             return content
@@ -258,6 +298,20 @@ class InpiProvider(OrganizationAtlasFranceProvider):
                     return items
         return []
 
+    def _matches_query(self, item: dict[str, Any], query: str) -> bool:
+        if not query:
+            return True
+        query = query.casefold()
+        candidates = [
+            self.get_normalize_denomination(item),
+            item.get("companyName"),
+            self._get_nested_value(item, "content.personneMorale.identite.entreprise.denomination"),
+            self._get_nested_value(item, "formality.content.personneMorale.identite.entreprise.denomination"),
+            self._get_nested_value(item, "content.personnePhysique.etablissementPrincipal.descriptionEtablissement.nomCommercial"),
+            self._get_nested_value(item, "formality.content.personnePhysique.etablissementPrincipal.descriptionEtablissement.nomCommercial"),
+        ]
+        return any(query in str(candidate).casefold() for candidate in candidates if candidate)
+
     def search_organization(self, query: str, raw: bool = False, **kwargs: Any) -> list[dict[str, Any]]:
         if not query:
             return []
@@ -271,6 +325,20 @@ class InpiProvider(OrganizationAtlasFranceProvider):
         companies = self._extract_companies(result)
         hydrated: list[dict[str, Any]] = []
         for item in companies:
+            company = self._hydrate_company(item)
+            if company:
+                hydrated.append(company)
+        if hydrated:
+            return hydrated
+
+        result = self._call_api(
+            self._companies_api_url(),
+            params={"search": query, "page": 1, "pageSize": 20},
+        )
+        hydrated = []
+        for item in self._extract_companies(result):
+            if not self._matches_query(item, query):
+                continue
             company = self._hydrate_company(item)
             if company:
                 hydrated.append(company)

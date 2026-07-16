@@ -1,41 +1,17 @@
 import re
 from typing import Any
 
+from ....fields.france import (
+    FRANCE_FIELDS_DESCRIPTIONS,
+    FR_SEARCH_COMPANY_FIELDS as FR_SEARCH_COMPANY_FIELDS,
+)
 from .. import OrganizationAtlasEuropeProvider
-
-FRANCE_FIELDS_DESCRIPTIONS = {
-    "siren": "SIREN number (9 digits, French organization identifier)",
-    "rna": "RNA number (W + 8 digits, French association identifier)",
-    "siret": "SIRET number (14 digits, French establishment identifier)",
-    "is_association": "Whether this is an association",
-    "denomination": "Organization name or legal name",
-    "since": "Organization creation date",
-    "legalform": "Legal form code or description",
-    "ape": "APE code (French activity code, NAF)",
-    "category": "Organization category (e.g., PME, ETI, GE)",
-    "slice_effective": "Employee count range code",
-    "is_headquarter": "Whether this is the organization headquarters",
-    "address_line1": "Street number and name",
-    "address_line2": "Building, apartment, floor (optional)",
-    "address_line3": "Additional address info (optional)",
-    "city": "City name",
-    "postal_code": "Postal code",
-    "state": "Department code or name",
-    "region": "Region code or name",
-    "county": "County or administrative county",
-    "country": "Country name",
-    "country_code": "ISO country code (e.g., FR)",
-    "municipality": "Municipality or commune",
-    "neighbourhood": "Neighbourhood, quarter, or district",
-    "latitude": "Latitude coordinate (float)",
-    "longitude": "Longitude coordinate (float)",
-}
 
 # (pattern, max_length, uppercase)
 _CODE_PATTERNS: dict[str, tuple[str, int, bool]] = {
     "siret": (r"^\d{14}$", 14, False),
     "siren": (r"^\d{9}$", 9, False),
-    "rna":   (r"^W|w\d{8}$", 9, True),
+    "rna":   (r"^W\d{8}$", 9, True),
 }
 
 
@@ -92,6 +68,14 @@ class OrganizationAtlasFranceProvider(OrganizationAtlasEuropeProvider):
     def _format_rna(self, rna: str) -> str:
         return self._format_code(rna, "rna")
 
+    def _format_ape(self, ape: Any) -> str | None:
+        if not ape:
+            return None
+        code = re.sub(r"[\s.]", "", str(ape)).upper()
+        if len(code) == 5 and code[:4].isdigit() and code[4].isalpha():
+            return f"{code[:2]}.{code[2:]}"
+        return str(ape)
+
     def _detect_code_type(self, code: str) -> str | None:
         for kind in ("siret", "siren", "rna"):
             if self._matches_pattern(code, kind):
@@ -147,7 +131,19 @@ class OrganizationAtlasFranceProvider(OrganizationAtlasEuropeProvider):
     # ProviderKit hook                                                     #
     # ------------------------------------------------------------------ #
 
+    def get_normalize_reference(self, data: dict[str, Any]) -> str | None:
+        reference = self._get_nested_value(data, self.fields_associations.get("reference", "reference"))
+        return str(reference) if reference else None
+
+    def get_normalize_ape(self, data: dict[str, Any]) -> str | None:
+        ape = self._get_nested_value(data, self.fields_associations.get("ape", "ape"))
+        return self._format_ape(ape)
+
     def get_normalize_source_field(self, data: dict[str, Any]) -> str | None:
+        reference = self.get_normalize_reference(data)
+        if reference:
+            return self._detect_code_type(reference)
+
         cache = self._service_results_cache.get("search_organization_by_reference", {})
         kwargs = cache.get("kwargs", {})
         code = kwargs.get("code", "")
